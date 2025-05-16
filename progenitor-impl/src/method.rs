@@ -1006,7 +1006,10 @@ impl Generator {
                         ResponseValue::upgrade(#response_ident).await
                     }
                 }
-                OperationResponseKind::Multiple { variants, enum_name } => {
+                OperationResponseKind::Multiple {
+                    variants,
+                    enum_name,
+                } => {
                     // Handle the case where the response type itself is Multiple
                     let variant_name = match &response.status_code {
                         OperationResponseStatus::Code(code) => {
@@ -1019,9 +1022,9 @@ impl Generator {
                             format_ident!("Default")
                         }
                     };
-                    
+
                     let enum_ident = format_ident!("{}", enum_name);
-                    
+
                     if variants.contains_key(&response.status_code) {
                         quote! {
                             ResponseValue::from_response(#response_ident).await
@@ -1064,7 +1067,7 @@ impl Generator {
                     if let OperationResponseKind::Multiple { variants, enum_name } = &error_type {
                         // If this status code has a specific type, use it
                         if variants.contains_key(&response.status_code) {
-                            let variant_name = match &response.status_code {
+                            match &response.status_code {
                                 OperationResponseStatus::Code(code) => {
                                     format_ident!("Status{}", code)
                                 }
@@ -1075,21 +1078,21 @@ impl Generator {
                                     format_ident!("Default")
                                 }
                             };
-                            
+
                             let enum_ident = format_ident!("{}", enum_name);
-                            
+
                             quote! {
                                 Err(Error::ErrorResponse(
-                                    ResponseValue::from_response(#response_ident)
+                                    ResponseValue::from_response::<types::#enum_ident>(#response_ident)
                                         .await?
-                                        .map(|v| #enum_ident::#variant_name(v))
+                                        .map(|v| v)
                                 ))
                             }
                         } else {
                             // Fallback for status codes not explicitly mapped
                             quote! {
                                 Err(Error::ErrorResponse(
-                                    ResponseValue::from_response(#response_ident).await?
+                                    ResponseValue::from_response::<_>(#response_ident).await?
                                 ))
                             }
                         }
@@ -1097,7 +1100,7 @@ impl Generator {
                         // Original behavior
                         quote! {
                             Err(Error::ErrorResponse(
-                                ResponseValue::from_response(#response_ident).await?
+                                ResponseValue::from_response::<_>(#response_ident).await?
                             ))
                         }
                     }
@@ -1128,7 +1131,7 @@ impl Generator {
                 }
                 OperationResponseKind::Multiple { variants, enum_name } => {
                     // Handle the case where the response type itself is Multiple
-                    let variant_name = match &response.status_code {
+                     match &response.status_code {
                         OperationResponseStatus::Code(code) => {
                             format_ident!("Status{}", code)
                         }
@@ -1139,22 +1142,22 @@ impl Generator {
                             format_ident!("Default")
                         }
                     };
-                    
+
                     let enum_ident = format_ident!("{}", enum_name);
-                    
+
                     if variants.contains_key(&response.status_code) {
                         quote! {
                             Err(Error::ErrorResponse(
-                                ResponseValue::from_response(#response_ident)
+                                ResponseValue::from_response::<types::#enum_ident>(#response_ident)
                                     .await?
-                                    .map(|v| #enum_ident::#variant_name(v))
+                                    .map(|v| v)
                             ))
                         }
                     } else {
                         // Fallback if this status code isn't in the variants map
                         quote! {
                             Err(Error::ErrorResponse(
-                                ResponseValue::from_response(#response_ident).await?
+                                ResponseValue::from_response::<_>(#response_ident).await?
                             ))
                         }
                     }
@@ -2277,6 +2280,7 @@ impl Generator {
                 // For a plain text body, we expect a simple, specific schema:
                 // "schema": {
                 //     "type": "string",
+                //     "format": "binary"
                 // }
                 match schema.item(components)? {
                     openapiv3::Schema {
@@ -2292,7 +2296,10 @@ impl Generator {
                         schema_kind:
                             openapiv3::SchemaKind::Type(openapiv3::Type::String(
                                 openapiv3::StringType {
-                                    format: openapiv3::VariantOrUnknownOrEmpty::Empty,
+                                    format:
+                                        openapiv3::VariantOrUnknownOrEmpty::Item(
+                                            openapiv3::StringFormat::Binary,
+                                        ),
                                     pattern: None,
                                     enumeration,
                                     min_length: None,
@@ -2301,12 +2308,13 @@ impl Generator {
                             )),
                     } if enumeration.is_empty() => Ok(()),
                     _ => Err(Error::UnexpectedFormat(format!(
-                        "invalid schema for {}: {:?}",
-                        content_type, schema
+                        "invalid schema for application/octet-stream: {:?}",
+                        schema
                     ))),
                 }?;
                 OperationParameterType::RawBody
             }
+
             BodyContentType::Json | BodyContentType::FormUrlencoded => {
                 // TODO it would be legal to have the encoding field set for
                 // application/x-www-form-urlencoded content, but I'm not sure
@@ -2340,8 +2348,8 @@ impl Generator {
         response_kind: &OperationResponseKind,
     ) -> Result<Option<TokenStream>> {
         if let OperationResponseKind::Multiple {
-            variants,
-            enum_name,
+            ref variants,
+            ref enum_name,
         } = response_kind
         {
             let enum_ident = format_ident!("{}", enum_name);
@@ -2398,6 +2406,7 @@ impl Generator {
 
             let enum_doc = format!("Response enum for the `{}` operation", method.operation_id);
 
+            // Place the enum in the types module
             let enum_def = quote! {
                 #[doc = #enum_doc]
                 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

@@ -290,13 +290,16 @@ impl Generator {
                     crate::method::OperationResponseKind::None => quote! { () },
                     crate::method::OperationResponseKind::Raw => todo!(),
                     crate::method::OperationResponseKind::Upgrade => todo!(),
-                    crate::method::OperationResponseKind::Multiple { variants: _, enum_name } => {
+                    crate::method::OperationResponseKind::Multiple {
+                        variants: _,
+                        enum_name,
+                    } => {
                         // For paginated APIs with multiple response types, use the enum name
                         let enum_ident = format_ident!("{}", enum_name);
                         quote! { #enum_ident }
                     }
                 };
-                
+
                 let error_output = match error_kind {
                     crate::method::OperationResponseKind::Type(_)
                     | crate::method::OperationResponseKind::None => {
@@ -324,7 +327,7 @@ impl Generator {
                         }
                     }
                 };
-                
+
                 quote! {
                     self.config.list_start::<#success_type>();
 
@@ -412,8 +415,8 @@ impl Generator {
                 continue;
             }
 
-            let first_page_required = first_page_required_set
-                .is_some_and(|required| required.contains(&param.api_name));
+            let first_page_required =
+                first_page_required_set.is_some_and(|required| required.contains(&param.api_name));
 
             let volitionality = if innately_required || first_page_required {
                 Volitionality::Required
