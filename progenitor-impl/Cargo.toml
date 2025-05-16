@@ -8,6 +8,7 @@ repository = "https://github.com/oxidecomputer/progenitor.git"
 readme = "../README.md"
 
 [dependencies]
+derive_more = { workspace = true }
 heck = { workspace = true }
 http = { workspace = true }
 indexmap = { workspace = true }

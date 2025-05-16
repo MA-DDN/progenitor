@@ -6,6 +6,8 @@ use std::{
     str::FromStr,
 };
 
+use derive_more::Display;
+
 use openapiv3::{Components, Parameter, ReferenceOr, Response, StatusCode};
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote, ToTokens};
@@ -196,7 +198,7 @@ impl PartialOrd for OperationResponse {
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq, Display, Hash)]
 pub(crate) enum OperationResponseStatus {
     Code(u16),
     Range(u16),
@@ -2370,7 +2372,7 @@ impl Generator {
                 };
 
                 let type_ident = type_name.ident();
-                let status_str = status_to_string(status);
+                let status_str = status.to_string();
 
                 quote! {
                     #[doc = concat!("Response for status code ", #status_str)]
