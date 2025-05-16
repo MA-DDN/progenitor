@@ -1342,60 +1342,40 @@ impl Generator {
                     status_code: OperationResponseStatus::Default,
                     ..
                 },
-            ) = (&response_items[len - 2], &response_items[len - 1])
+            ) = (&response_items[0], &response_items[len - 1])
             {
                 response_items.pop();
             }
         }
 
-        // Collect all unique response types
-        let response_types = response_items
-            .iter()
-            .map(|response| (response.status_code.clone(), response.typ.clone()))
-            .collect::<Vec<_>>();
-
-        // Check if we have multiple different response types
-        let unique_types = response_types
-            .iter()
-            .map(|(_, typ)| typ)
-            .collect::<BTreeSet<_>>();
-
-        // If we have multiple different types, create a Multiple variant
-        if unique_types.len() > 1 {
-            // Only handle Type responses for now
-            let variants = response_types
-                .clone()
-                .into_iter()
-                .filter_map(|(status, typ)| {
-                    if let OperationResponseKind::Type(type_id) = typ {
-                        Some((status, type_id))
-                    } else {
-                        None
-                    }
-                })
-                .collect::<BTreeMap<_, _>>();
-
-            // Only proceed if we have at least one Type response
-            if !variants.is_empty() {
-                let enum_name = format!("{}Response", method.operation_id);
-
-                return (
-                    response_items,
-                    OperationResponseKind::Multiple {
-                        variants,
-                        enum_name,
-                    },
-                );
+        // Check if we have multiple response types
+        let mut response_types = std::collections::BTreeMap::new();
+        for response in &response_items {
+            if let OperationResponseKind::Type(type_id) = &response.typ {
+                response_types.insert(response.status_code.clone(), type_id.clone());
             }
         }
 
-        // Fall back to the original behavior if we don't have multiple Type responses
-        let response_type = unique_types
-            .into_iter()
-            .next()
-            .unwrap_or(&OperationResponseKind::None);
+        // If we have multiple different response types, create an enum
+        if response_types.len() > 1 {
+            let enum_name = format!("{}Response", method.operation_id);
+            return (
+                response_items,
+                OperationResponseKind::Multiple {
+                    variants: response_types,
+                    enum_name,
+                },
+            );
+        }
 
-        (response_items, response_type.clone())
+        // Otherwise, use the first response type (or None if there are no responses)
+        let response_kind = if let Some(response) = response_items.first() {
+            response.typ.clone()
+        } else {
+            OperationResponseKind::None
+        };
+
+        (response_items, response_kind)
     }
 
     // Validates all the necessary conditions for Dropshot pagination. Returns
@@ -2352,8 +2332,7 @@ impl Generator {
         if let OperationResponseKind::Multiple {
             ref variants,
             ref enum_name,
-        } = response_kind
-        {
+        } = response_kind {
             let enum_ident = format_ident!("{}", enum_name);
 
             // Generate a variant for each response type
@@ -2378,33 +2357,7 @@ impl Generator {
                     #[doc = concat!("Response for status code ", #status_str)]
                     #variant_name(#type_ident)
                 }
-            });
-
-            // Generate From implementations for each variant
-            let from_impls = variants.iter().map(|(status, type_id)| {
-                let type_name = self.type_space.get_type(type_id).unwrap();
-                let variant_name = match status {
-                    OperationResponseStatus::Code(code) => {
-                        format_ident!("Status{}", code)
-                    }
-                    OperationResponseStatus::Range(range) => {
-                        format_ident!("Status{}xx", range)
-                    }
-                    OperationResponseStatus::Default => {
-                        format_ident!("Default")
-                    }
-                };
-
-                let type_ident = type_name.ident();
-
-                quote! {
-                    impl From<#type_ident> for #enum_ident {
-                        fn from(value: #type_ident) -> Self {
-                            Self::#variant_name(value)
-                        }
-                    }
-                }
-            });
+            }).collect::<Vec<_>>();
 
             let enum_doc = format!("Response enum for the `{}` operation", method.operation_id);
 
@@ -2415,8 +2368,6 @@ impl Generator {
                 pub enum #enum_ident {
                     #(#variants_tokens),*
                 }
-
-                #(#from_impls)*
             };
 
             return Ok(Some(enum_def));
@@ -2588,14 +2539,5 @@ impl ParameterDataExt for openapiv3::ParameterData {
                 format!("unexpected content {:#?}", c),
             )),
         }
-    }
-}
-
-// Add a helper function to convert OperationResponseStatus to a string representation
-fn status_to_string(status: &OperationResponseStatus) -> String {
-    match status {
-        OperationResponseStatus::Code(code) => format!("{}", code),
-        OperationResponseStatus::Range(range) => format!("{}xx", range),
-        OperationResponseStatus::Default => "default".to_string(),
     }
 }
