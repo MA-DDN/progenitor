@@ -233,6 +233,14 @@ impl Generator {
                             }
                         }
                     }
+                    crate::method::OperationResponseKind::Multiple { .. } => {
+                        quote! {
+                            {
+                                self.config.success_item(&r);
+                                Ok(())
+                            }
+                        }
+                    }
                 };
 
                 let error_output = match error_kind {
@@ -250,6 +258,14 @@ impl Generator {
                         quote! {
                             {
                                 todo!()
+                            }
+                        }
+                    }
+                    crate::method::OperationResponseKind::Multiple { .. } => {
+                        quote! {
+                            {
+                                self.config.error(&r);
+                                Err(anyhow::Error::new(r))
                             }
                         }
                     }
@@ -274,6 +290,10 @@ impl Generator {
                     crate::method::OperationResponseKind::None => quote! { () },
                     crate::method::OperationResponseKind::Raw => todo!(),
                     crate::method::OperationResponseKind::Upgrade => todo!(),
+                    crate::method::OperationResponseKind::Multiple { .. } => {
+                        // For paginated APIs with multiple response types, we'll use the enum
+                        quote! { () } // This is a placeholder, adjust as needed
+                    }
                 };
                 let error_output = match error_kind {
                     crate::method::OperationResponseKind::Type(_)

@@ -356,6 +356,18 @@ impl Generator {
                         },
                     ),
                     crate::method::OperationResponseKind::Upgrade => Default::default(),
+                    crate::method::OperationResponseKind::Multiple { .. } => {
+                        // For multiple response types, we'll use the same approach as Type
+                        (
+                            quote! {
+                                value: serde_json::Value,
+                            },
+                            quote! {
+                                .header("content-type", "application/json")
+                                .json_body_obj(value)
+                            },
+                        )
+                    }
                 };
 
                 match status_code {

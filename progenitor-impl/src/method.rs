@@ -1007,8 +1007,34 @@ impl Generator {
                         ResponseValue::upgrade(#response_ident).await
                     }
                 }
-                // Handle the Multiple case at the response level, not at the individual match arm level
-                OperationResponseKind::Multiple { .. } => unreachable!(),
+                OperationResponseKind::Multiple { ref variants, ref enum_name } => {
+                    // Handle the case where the response type itself is Multiple
+                    let variant_name = match &response.status_code {
+                        OperationResponseStatus::Code(code) => {
+                            format_ident!("Status{}", code)
+                        }
+                        OperationResponseStatus::Range(range) => {
+                            format_ident!("Status{}xx", range)
+                        }
+                        OperationResponseStatus::Default => {
+                            format_ident!("Default")
+                        }
+                    };
+                    
+                    let enum_ident = format_ident!("{}", enum_name);
+                    
+                    if let Some(type_id) = variants.get(&response.status_code) {
+                        quote! {
+                            ResponseValue::from_response(#response_ident).await
+                                .map(|v| #enum_ident::#variant_name(v))
+                        }
+                    } else {
+                        // Fallback if this status code isn't in the variants map
+                        quote! {
+                            ResponseValue::from_response(#response_ident).await
+                        }
+                    }
+                }
             };
 
             quote! { #pat => { #decode } }
@@ -1028,7 +1054,6 @@ impl Generator {
                     let max = min + 99;
                     quote! { #min ..= #max }
                 }
-
                 OperationResponseStatus::Default => {
                     quote! { _ }
                 }
@@ -1036,11 +1061,46 @@ impl Generator {
 
             let decode = match &response.typ {
                 OperationResponseKind::Type(_) => {
-                    quote! {
-                        Err(Error::ErrorResponse(
-                            ResponseValue::from_response(#response_ident)
-                                .await?
-                        ))
+                    // Check if we're using the Multiple response kind
+                    if let OperationResponseKind::Multiple { ref variants, ref enum_name } = &error_type {
+                        // If this status code has a specific type, use it
+                        if let Some(_) = variants.get(&response.status_code) {
+                            let variant_name = match &response.status_code {
+                                OperationResponseStatus::Code(code) => {
+                                    format_ident!("Status{}", code)
+                                }
+                                OperationResponseStatus::Range(range) => {
+                                    format_ident!("Status{}xx", range)
+                                }
+                                OperationResponseStatus::Default => {
+                                    format_ident!("Default")
+                                }
+                            };
+                            
+                            let enum_ident = format_ident!("{}", enum_name);
+                            
+                            quote! {
+                                Err(Error::ErrorResponse(
+                                    ResponseValue::from_response(#response_ident)
+                                        .await?
+                                        .map(|v| #enum_ident::#variant_name(v))
+                                ))
+                            }
+                        } else {
+                            // Fallback for status codes not explicitly mapped
+                            quote! {
+                                Err(Error::ErrorResponse(
+                                    ResponseValue::from_response(#response_ident).await?
+                                ))
+                            }
+                        }
+                    } else {
+                        // Original behavior
+                        quote! {
+                            Err(Error::ErrorResponse(
+                                ResponseValue::from_response(#response_ident).await?
+                            ))
+                        }
                     }
                 }
                 OperationResponseKind::None => {
@@ -1065,6 +1125,39 @@ impl Generator {
                             "non-default error response handling for \
                                 upgrade requests is not yet implemented"
                         );
+                    }
+                }
+                OperationResponseKind::Multiple { ref variants, ref enum_name } => {
+                    // Handle the case where the response type itself is Multiple
+                    let variant_name = match &response.status_code {
+                        OperationResponseStatus::Code(code) => {
+                            format_ident!("Status{}", code)
+                        }
+                        OperationResponseStatus::Range(range) => {
+                            format_ident!("Status{}xx", range)
+                        }
+                        OperationResponseStatus::Default => {
+                            format_ident!("Default")
+                        }
+                    };
+                    
+                    let enum_ident = format_ident!("{}", enum_name);
+                    
+                    if let Some(_) = variants.get(&response.status_code) {
+                        quote! {
+                            Err(Error::ErrorResponse(
+                                ResponseValue::from_response(#response_ident)
+                                    .await?
+                                    .map(|v| #enum_ident::#variant_name(v))
+                            ))
+                        }
+                    } else {
+                        // Fallback if this status code isn't in the variants map
+                        quote! {
+                            Err(Error::ErrorResponse(
+                                ResponseValue::from_response(#response_ident).await?
+                            ))
+                        }
                     }
                 }
             };
