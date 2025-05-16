@@ -290,11 +290,13 @@ impl Generator {
                     crate::method::OperationResponseKind::None => quote! { () },
                     crate::method::OperationResponseKind::Raw => todo!(),
                     crate::method::OperationResponseKind::Upgrade => todo!(),
-                    crate::method::OperationResponseKind::Multiple { .. } => {
-                        // For paginated APIs with multiple response types, we'll use the enum
-                        quote! { () } // This is a placeholder, adjust as needed
+                    crate::method::OperationResponseKind::Multiple { ref variants, ref enum_name } => {
+                        // For paginated APIs with multiple response types, use the enum name
+                        let enum_ident = format_ident!("{}", enum_name);
+                        quote! { #enum_ident }
                     }
                 };
+                
                 let error_output = match error_kind {
                     crate::method::OperationResponseKind::Type(_)
                     | crate::method::OperationResponseKind::None => {
@@ -313,7 +315,16 @@ impl Generator {
                             }
                         }
                     }
+                    crate::method::OperationResponseKind::Multiple { .. } => {
+                        quote! {
+                            {
+                                self.config.list_end_error(&r);
+                                return Err(anyhow::Error::new(r))
+                            }
+                        }
+                    }
                 };
+                
                 quote! {
                     self.config.list_start::<#success_type>();
 
@@ -611,17 +622,6 @@ impl Generator {
         } else if required {
             args.body_required()
         }
-
-        // Cases
-        // 1. If the type can be represented as a string, great
-        //
-        // 2. If it's a substruct then we can try to glue the names together
-        // and hope?
-        //
-        // 3. enums
-        // 3.1 simple enums (should be covered by 1 above)
-        //   e.g. enum { A, B }
-        //   args for --a and --b that are in a group
     }
 }
 

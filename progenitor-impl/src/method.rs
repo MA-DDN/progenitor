@@ -2363,9 +2363,10 @@ impl Generator {
                 };
 
                 let type_ident = type_name.ident();
+                let status_str = status_to_string(status);
 
                 quote! {
-                    #[doc = concat!("Response for status code ", stringify!(#status))]
+                    #[doc = concat!("Response for status code ", #status_str)]
                     #variant_name(#type_ident)
                 }
             });
@@ -2577,5 +2578,14 @@ impl ParameterDataExt for openapiv3::ParameterData {
                 format!("unexpected content {:#?}", c),
             )),
         }
+    }
+}
+
+// Add a helper function to convert OperationResponseStatus to a string representation
+fn status_to_string(status: &OperationResponseStatus) -> String {
+    match status {
+        OperationResponseStatus::Code(code) => format!("{}", code),
+        OperationResponseStatus::Range(range) => format!("{}xx", range),
+        OperationResponseStatus::Default => "default".to_string(),
     }
 }
