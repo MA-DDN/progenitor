@@ -290,7 +290,7 @@ impl Generator {
                     crate::method::OperationResponseKind::None => quote! { () },
                     crate::method::OperationResponseKind::Raw => todo!(),
                     crate::method::OperationResponseKind::Upgrade => todo!(),
-                    crate::method::OperationResponseKind::Multiple { ref variants, ref enum_name } => {
+                    crate::method::OperationResponseKind::Multiple { variants: _, enum_name } => {
                         // For paginated APIs with multiple response types, use the enum name
                         let enum_ident = format_ident!("{}", enum_name);
                         quote! { #enum_ident }
@@ -413,7 +413,7 @@ impl Generator {
             }
 
             let first_page_required = first_page_required_set
-                .map_or(false, |required| required.contains(&param.api_name));
+                .is_some_and(|required| required.contains(&param.api_name));
 
             let volitionality = if innately_required || first_page_required {
                 Volitionality::Required

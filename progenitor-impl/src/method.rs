@@ -272,8 +272,8 @@ pub(crate) enum OperationResponseKind {
 impl OperationResponseKind {
     pub fn into_tokens(self, type_space: &TypeSpace) -> TokenStream {
         match self {
-            OperationResponseKind::Type(ref type_id) => {
-                let type_name = type_space.get_type(type_id).unwrap().ident();
+            OperationResponseKind::Type(type_id) => {
+                let type_name = type_space.get_type(&type_id).unwrap().ident();
                 quote! { #type_name }
             }
             OperationResponseKind::None => {
@@ -285,7 +285,7 @@ impl OperationResponseKind {
             OperationResponseKind::Upgrade => {
                 quote! { reqwest::Upgraded }
             }
-            OperationResponseKind::Multiple { ref enum_name, .. } => {
+            OperationResponseKind::Multiple { enum_name, .. } => {
                 // For multiple response types, we'll generate an enum
                 let enum_ident = format_ident!("{}", enum_name);
                 quote! { #enum_ident }
@@ -951,11 +951,11 @@ impl Generator {
             };
 
             let decode = match &response.typ {
-                OperationResponseKind::Type(type_id) => {
+                OperationResponseKind::Type(_) => {
                     // Check if we're using the Multiple response kind
                     if let OperationResponseKind::Multiple {
-                        ref variants,
-                        ref enum_name,
+                        variants,
+                        enum_name,
                     } = &response_type
                     {
                         // If this status code has a specific type, use it
@@ -972,7 +972,6 @@ impl Generator {
                                 }
                             };
 
-                            let type_name = self.type_space.get_type(type_id).unwrap().ident();
                             let enum_ident = format_ident!("{}", enum_name);
 
                             quote! {
@@ -1007,7 +1006,7 @@ impl Generator {
                         ResponseValue::upgrade(#response_ident).await
                     }
                 }
-                OperationResponseKind::Multiple { ref variants, ref enum_name } => {
+                OperationResponseKind::Multiple { variants, enum_name } => {
                     // Handle the case where the response type itself is Multiple
                     let variant_name = match &response.status_code {
                         OperationResponseStatus::Code(code) => {
@@ -1023,7 +1022,7 @@ impl Generator {
                     
                     let enum_ident = format_ident!("{}", enum_name);
                     
-                    if let Some(type_id) = variants.get(&response.status_code) {
+                    if variants.contains_key(&response.status_code) {
                         quote! {
                             ResponseValue::from_response(#response_ident).await
                                 .map(|v| #enum_ident::#variant_name(v))
@@ -1062,9 +1061,9 @@ impl Generator {
             let decode = match &response.typ {
                 OperationResponseKind::Type(_) => {
                     // Check if we're using the Multiple response kind
-                    if let OperationResponseKind::Multiple { ref variants, ref enum_name } = &error_type {
+                    if let OperationResponseKind::Multiple { variants, enum_name } = &error_type {
                         // If this status code has a specific type, use it
-                        if let Some(_) = variants.get(&response.status_code) {
+                        if variants.contains_key(&response.status_code) {
                             let variant_name = match &response.status_code {
                                 OperationResponseStatus::Code(code) => {
                                     format_ident!("Status{}", code)
@@ -1127,7 +1126,7 @@ impl Generator {
                         );
                     }
                 }
-                OperationResponseKind::Multiple { ref variants, ref enum_name } => {
+                OperationResponseKind::Multiple { variants, enum_name } => {
                     // Handle the case where the response type itself is Multiple
                     let variant_name = match &response.status_code {
                         OperationResponseStatus::Code(code) => {
@@ -1143,7 +1142,7 @@ impl Generator {
                     
                     let enum_ident = format_ident!("{}", enum_name);
                     
-                    if let Some(_) = variants.get(&response.status_code) {
+                    if variants.contains_key(&response.status_code) {
                         quote! {
                             Err(Error::ErrorResponse(
                                 ResponseValue::from_response(#response_ident)
@@ -2341,8 +2340,8 @@ impl Generator {
         response_kind: &OperationResponseKind,
     ) -> Result<Option<TokenStream>> {
         if let OperationResponseKind::Multiple {
-            ref variants,
-            ref enum_name,
+            variants,
+            enum_name,
         } = response_kind
         {
             let enum_ident = format_ident!("{}", enum_name);

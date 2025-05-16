@@ -362,7 +362,7 @@ impl Generator {
         let mut response_enums = Vec::new();
         for method in &raw_methods {
             // Extract success responses
-            let (success_items, success_kind) = self.extract_responses(method, |status| {
+            let (_, success_kind) = self.extract_responses(method, |status| {
                 matches!(
                     status,
                     OperationResponseStatus::Code(200..=299)
@@ -377,7 +377,7 @@ impl Generator {
             }
 
             // Extract error responses
-            let (error_items, error_kind) = self.extract_responses(method, |status| {
+            let (_, error_kind) = self.extract_responses(method, |status| {
                 !matches!(
                     status,
                     OperationResponseStatus::Code(200..=299) | OperationResponseStatus::Range(2)
