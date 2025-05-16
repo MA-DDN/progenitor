@@ -8,9 +8,91 @@ use unicode_ident::{is_xid_continue, is_xid_start};
 
 use crate::Result;
 
+/*pub trait ReferenceOrExt<T> {
+    fn item(&self, components: &Option<Components>) -> Result<&T>;
+}*/
+
 pub(crate) trait ReferenceOrExt<T: ComponentLookup> {
     fn item<'a>(&'a self, components: &'a Option<Components>) -> Result<&'a T>;
 }
+
+/*impl<T> ReferenceOrExt<T> for ReferenceOr<T> {
+    fn item(&self, components: &Option<Components>) -> Result<&T> {
+        match self {
+            ReferenceOr::Item(item) => Ok(item),
+            ReferenceOr::Reference { reference } => {
+                // Handle references more robustly
+                let components = components.as_ref().ok_or_else(|| {
+                    Error::UnexpectedFormat(format!(
+                        "reference {} without components",
+                        reference
+                    ))
+                })?;
+
+                // Extract the reference path
+                let parts: Vec<&str> = reference.split('/').collect();
+                if parts.len() != 4 || parts[0] != "#" || parts[1] != "components" {
+                    return Err(Error::UnexpectedFormat(format!(
+                        "invalid reference format: {}",
+                        reference
+                    )));
+                }
+
+                // Get the component type and name
+                let component_type = parts[2];
+                let component_name = parts[3];
+
+                // Look up the component based on its type
+                match component_type {
+                    "schemas" => {
+                        if let Some(schema) = components.schemas.get(component_name) {
+                            // This is a type conversion that won't work directly
+                            // We need to handle this case specially based on T
+                            return Err(Error::UnexpectedFormat(format!(
+                                "reference to schema {} not supported in this context",
+                                reference
+                            )));
+                        }
+                    }
+                    "parameters" => {
+                        if let Some(param) = components.parameters.get(component_name) {
+                            // Similar issue with type conversion
+                            return Err(Error::UnexpectedFormat(format!(
+                                "reference to parameter {} not supported in this context",
+                                reference
+                            )));
+                        }
+                    }
+                    "requestBodies" => {
+                        if let Some(body) = components.request_bodies.get(component_name) {
+                            // Similar issue with type conversion
+                            return Err(Error::UnexpectedFormat(format!(
+                                "reference to request body {} not supported in this context",
+                                reference
+                            )));
+                        }
+                    }
+                    "responses" => {
+                        if let Some(response) = components.responses.get(component_name) {
+                            // Similar issue with type conversion
+                            return Err(Error::UnexpectedFormat(format!(
+                                "reference to response {} not supported in this context",
+                                reference
+                            )));
+                        }
+                    }
+                    _ => {}
+                }
+
+                Err(Error::UnexpectedFormat(format!(
+                    "reference not found: {}",
+                    reference
+                )))
+            }
+        }
+    }
+}*/
+
 pub(crate) trait ComponentLookup: Sized {
     fn get_components(components: &Components) -> &IndexMap<String, ReferenceOr<Self>>;
 }

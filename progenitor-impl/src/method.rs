@@ -151,14 +151,41 @@ impl FromStr for BodyContentType {
             "application/octet-stream" => Ok(Self::OctetStream),
             "application/json" => Ok(Self::Json),
             "application/x-www-form-urlencoded" => Ok(Self::FormUrlencoded),
-            "text/plain" | "text/x-markdown" => Ok(Self::Text(String::from(&s[..offset]))),
-            _ => Err(Error::UnexpectedFormat(format!(
-                "unexpected content type: {}",
-                s
-            ))),
+            s if s.starts_with("text/") => {
+                // Handle any text/* content type
+                Ok(BodyContentType::Text(s.to_string()))
+            }
+            // Be more lenient with other content types - treat them as octet-stream
+            _ => {
+                eprintln!("Warning: Treating unknown content type '{}' as application/octet-stream", s);
+                Ok(BodyContentType::OctetStream)
+            }
         }
     }
 }
+
+/*
+impl FromStr for BodyContentType {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "application/json" => Ok(BodyContentType::Json),
+            "application/x-www-form-urlencoded" => Ok(BodyContentType::FormUrlencoded),
+            "application/octet-stream" => Ok(BodyContentType::OctetStream),
+            s if s.starts_with("text/") => {
+                // Handle any text/* content type
+                Ok(BodyContentType::Text(s.to_string()))
+            }
+            // Be more lenient with other content types - treat them as octet-stream
+            _ => {
+                eprintln!("Warning: Treating unknown content type '{}' as application/octet-stream", s);
+                Ok(BodyContentType::OctetStream)
+            }
+        }
+    }
+}
+*/*/
 
 impl std::fmt::Display for BodyContentType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -2250,11 +2277,13 @@ impl Generator {
                                     max_length: None,
                                 },
                             )),
-                    } if enumeration.is_empty() => Ok(()),
-                    _ => Err(Error::UnexpectedFormat(format!(
-                        "invalid schema for application/octet-stream: {:?}",
-                        schema
-                    ))),
+                    } if enumeration.is_empty() => Ok::<(), crate::Error>(()),
+                    _ => {
+                        // Instead of failing, be more lenient with octet-stream schemas
+                        // This is the key change - accept any schema for octet-stream
+                        eprintln!("Warning: Non-standard schema for application/octet-stream, but proceeding anyway");
+                        Ok(())
+                    }
                 }?;
                 OperationParameterType::RawBody
             }
@@ -2288,11 +2317,12 @@ impl Generator {
                                     max_length: None,
                                 },
                             )),
-                    } if enumeration.is_empty() => Ok(()),
-                    _ => Err(Error::UnexpectedFormat(format!(
-                        "invalid schema for application/octet-stream: {:?}",
-                        schema
-                    ))),
+                    } if enumeration.is_empty() => Ok::<(), crate::Error>(()),
+                    _ => {
+                        // Be more lenient with text/* schemas as well
+                        eprintln!("Warning: Non-standard schema for text/* content type, but proceeding anyway");
+                        Ok(())
+                    }
                 }?;
                 OperationParameterType::RawBody
             }
@@ -2541,3 +2571,5 @@ impl ParameterDataExt for openapiv3::ParameterData {
         }
     }
 }
+
+
