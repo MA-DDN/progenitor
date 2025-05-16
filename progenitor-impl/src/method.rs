@@ -953,7 +953,11 @@ impl Generator {
             let decode = match &response.typ {
                 OperationResponseKind::Type(type_id) => {
                     // Check if we're using the Multiple response kind
-                    if let OperationResponseKind::Multiple { ref variants, ref enum_name } = &response_type {
+                    if let OperationResponseKind::Multiple {
+                        ref variants,
+                        ref enum_name,
+                    } = &response_type
+                    {
                         // If this status code has a specific type, use it
                         if variants.contains_key(&response.status_code) {
                             let variant_name = match &response.status_code {
@@ -967,10 +971,10 @@ impl Generator {
                                     format_ident!("Default")
                                 }
                             };
-                            
+
                             let type_name = self.type_space.get_type(type_id).unwrap().ident();
                             let enum_ident = format_ident!("{}", enum_name);
-                            
+
                             quote! {
                                 ResponseValue::from_response(#response_ident).await
                                     .map(|v| #enum_ident::#variant_name(v))
@@ -1250,7 +1254,7 @@ impl Generator {
         // Collect all unique response types
         let response_types = response_items
             .iter()
-            .map(|response| (response.status_code, response.typ.clone()))
+            .map(|response| (response.status_code.clone(), response.typ.clone()))
             .collect::<Vec<_>>();
 
         // Check if we have multiple different response types
@@ -1263,6 +1267,7 @@ impl Generator {
         if unique_types.len() > 1 {
             // Only handle Type responses for now
             let variants = response_types
+                .clone()
                 .into_iter()
                 .filter_map(|(status, typ)| {
                     if let OperationResponseKind::Type(type_id) = typ {
@@ -1275,11 +1280,8 @@ impl Generator {
 
             // Only proceed if we have at least one Type response
             if !variants.is_empty() {
-                let enum_name = format!(
-                    "{}Response",
-                    method.operation_id
-                );
-                
+                let enum_name = format!("{}Response", method.operation_id);
+
                 return (
                     response_items,
                     OperationResponseKind::Multiple {
@@ -1294,9 +1296,9 @@ impl Generator {
         let response_type = unique_types
             .into_iter()
             .next()
-            .unwrap_or(OperationResponseKind::None);
-        
-        (response_items, response_type)
+            .unwrap_or(&OperationResponseKind::None);
+
+        (response_items, response_type.clone())
     }
 
     // Validates all the necessary conditions for Dropshot pagination. Returns
@@ -2240,10 +2242,18 @@ impl Generator {
         }))
     }
 
-    fn generate_response_enum(&mut self, method: &OperationMethod, response_kind: &OperationResponseKind) -> Result<Option<TokenStream>> {
-        if let OperationResponseKind::Multiple { ref variants, ref enum_name } = response_kind {
+    pub(crate) fn generate_response_enum(
+        &mut self,
+        method: &OperationMethod,
+        response_kind: &OperationResponseKind,
+    ) -> Result<Option<TokenStream>> {
+        if let OperationResponseKind::Multiple {
+            ref variants,
+            ref enum_name,
+        } = response_kind
+        {
             let enum_ident = format_ident!("{}", enum_name);
-            
+
             // Generate a variant for each response type
             let variants_tokens = variants.iter().map(|(status, type_id)| {
                 let type_name = self.type_space.get_type(type_id).unwrap();
@@ -2258,15 +2268,15 @@ impl Generator {
                         format_ident!("Default")
                     }
                 };
-                
+
                 let type_ident = type_name.ident();
-                
+
                 quote! {
                     #[doc = concat!("Response for status code ", stringify!(#status))]
                     #variant_name(#type_ident)
                 }
             });
-            
+
             // Generate From implementations for each variant
             let from_impls = variants.iter().map(|(status, type_id)| {
                 let type_name = self.type_space.get_type(type_id).unwrap();
@@ -2281,9 +2291,9 @@ impl Generator {
                         format_ident!("Default")
                     }
                 };
-                
+
                 let type_ident = type_name.ident();
-                
+
                 quote! {
                     impl From<#type_ident> for #enum_ident {
                         fn from(value: #type_ident) -> Self {
@@ -2292,22 +2302,22 @@ impl Generator {
                     }
                 }
             });
-            
+
             let enum_doc = format!("Response enum for the `{}` operation", method.operation_id);
-            
+
             let enum_def = quote! {
                 #[doc = #enum_doc]
                 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
                 pub enum #enum_ident {
                     #(#variants_tokens),*
                 }
-                
+
                 #(#from_impls)*
             };
-            
+
             return Ok(Some(enum_def));
         }
-        
+
         Ok(None)
     }
 }
