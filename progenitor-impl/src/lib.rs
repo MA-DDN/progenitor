@@ -358,6 +358,32 @@ impl Generator {
             }
         }?;
 
+        // Generate response enums for methods with multiple response types
+        let mut response_enums = Vec::new();
+        for method in &raw_methods {
+            // Extract success responses
+            let (success_items, success_kind) = self.extract_responses(
+                method,
+                |status| matches!(status, OperationResponseStatus::Code(200..=299) | OperationResponseStatus::Range(2) | OperationResponseStatus::Default),
+            );
+            
+            // Generate enum if needed
+            if let Some(enum_def) = self.generate_response_enum(method, &success_kind)? {
+                response_enums.push(enum_def);
+            }
+            
+            // Extract error responses
+            let (error_items, error_kind) = self.extract_responses(
+                method,
+                |status| !matches!(status, OperationResponseStatus::Code(200..=299) | OperationResponseStatus::Range(2)),
+            );
+            
+            // Generate enum if needed
+            if let Some(enum_def) = self.generate_response_enum(method, &error_kind)? {
+                response_enums.push(enum_def);
+            }
+        }
+
         let types = self.type_space.to_stream();
 
         let (inner_type, inner_fn_value) = match self.settings.inner_type.as_ref() {
