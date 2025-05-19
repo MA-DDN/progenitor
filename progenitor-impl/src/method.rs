@@ -296,6 +296,8 @@ pub(crate) enum OperationResponseKind {
         // Name for the enum that will contain all variants
         enum_name: String,
     },
+    // New variant for empty response types
+    EmptyResponse(String),
 }
 
 impl OperationResponseKind {
@@ -318,6 +320,10 @@ impl OperationResponseKind {
                 // For multiple response types, we'll generate an enum
                 let enum_ident = format_ident!("{}", enum_name);
                 quote! { #enum_ident }
+            }
+            OperationResponseKind::EmptyResponse(name) => {
+                let type_ident = format_ident!("{}", name);
+                quote! { types::#type_ident }
             }
         }
     }
@@ -1005,7 +1011,7 @@ impl Generator {
 
                             quote! {
                                 ResponseValue::from_response(#response_ident).await
-                                    .map(|v| #enum_ident::#variant_name(v))
+                                    .map(|v| types::#enum_ident::#variant_name(v))
                             }
                         } else {
                             // Fallback for status codes not explicitly mapped
@@ -1057,13 +1063,19 @@ impl Generator {
                     if variants.contains_key(&response.status_code) {
                         quote! {
                             ResponseValue::from_response(#response_ident).await
-                                .map(|v| #enum_ident::#variant_name(v))
+                                .map(|v| types::#enum_ident::#variant_name(v))
                         }
                     } else {
                         // Fallback if this status code isn't in the variants map
                         quote! {
                             ResponseValue::from_response(#response_ident).await
                         }
+                    }
+                }
+                OperationResponseKind::EmptyResponse(_) => {
+                    // For empty responses, return an empty struct
+                    quote! {
+                        Ok(ResponseValue::empty(#response_ident))
                     }
                 }
             };
@@ -1369,13 +1381,52 @@ impl Generator {
                     status_code: OperationResponseStatus::Default,
                     ..
                 },
-            ) = (&response_items[len - 2], &response_items[len - 1])
+            ) = (&response_items[0], &response_items[len - 1])
             {
                 response_items.pop();
             }
         }
 
-        // Collect all unique response types
+        // Check if we have multiple response types
+        /*let mut response_types = std::collections::HashMap::new();
+        
+        for response in &response_items {
+            if let OperationResponseKind::Type(type_id) = &response.typ {
+                response_types.insert(response.status_code.clone(), *type_id);
+            }
+        }
+
+        // If we have multiple different response types, create an enum
+        if response_types.len() > 1 {
+            let enum_name = format!("{}Response", method.operation_id);
+            return (
+                response_items,
+                OperationResponseKind::Multiple {
+                    variants: response_types,
+                    enum_name,
+                },
+            );
+        }
+
+        // If we have a single response type, use it
+        if let Some(response) = response_items.first() {
+            return (response_items, response.typ.clone());
+        }
+
+        // If we have no responses but this is a success filter, create an empty response type
+        if filter(&OperationResponseStatus::Range(2)) {
+            // For success responses, ensure we always have a response type
+            let response_name = format!("{}Response", method.operation_id);
+            return (
+                response_items,
+                OperationResponseKind::EmptyResponse(response_name),
+            );
+        }
+
+        // Otherwise, use None
+        (response_items, OperationResponseKind::None)*/
+
+                // Collect all unique response types
         let response_types = response_items
             .iter()
             .map(|response| (response.status_code.clone(), response.typ.clone()))
@@ -2379,79 +2430,65 @@ impl Generator {
         method: &OperationMethod,
         response_kind: &OperationResponseKind,
     ) -> Result<Option<TokenStream>> {
-        if let OperationResponseKind::Multiple {
-            ref variants,
-            ref enum_name,
-        } = response_kind {
-            let enum_ident = format_ident!("{}", enum_name);
+        match response_kind {
+            OperationResponseKind::Multiple {
+                ref variants,
+                ref enum_name,
+            } => {
+                let enum_ident = format_ident!("{}", enum_name);
 
-            // Generate a variant for each response type
-            let variants_tokens = variants.iter().map(|(status, type_id)| {
-                let type_name = self.type_space.get_type(type_id).unwrap();
-                let variant_name = match status {
-                    OperationResponseStatus::Code(code) => {
-                        format_ident!("Status{}", code)
-                    }
-                    OperationResponseStatus::Range(range) => {
-                        format_ident!("Status{}xx", range)
-                    }
-                    OperationResponseStatus::Default => {
-                        format_ident!("Default")
-                    }
-                };
-
-                let type_ident = type_name.ident();
-                let status_str = status.to_string();
-
-                quote! {
-                    #[doc = concat!("Response for status code ", #status_str)]
-                    #variant_name(#type_ident)
-                }
-            }).collect::<Vec<_>>();
-
-            // Generate From implementations for each variant
-            let from_impls = variants.iter().map(|(status, type_id)| {
-                let type_name = self.type_space.get_type(type_id).unwrap();
-                let variant_name = match status {
-                    OperationResponseStatus::Code(code) => {
-                        format_ident!("Status{}", code)
-                    }
-                    OperationResponseStatus::Range(range) => {
-                        format_ident!("Status{}xx", range)
-                    }
-                    OperationResponseStatus::Default => {
-                        format_ident!("Default")
-                    }
-                };
-
-                let type_ident = type_name.ident();
-
-                quote! {
-                    impl From<#type_ident> for #enum_ident {
-                        fn from(value: #type_ident) -> Self {
-                            Self::#variant_name(value)
+                // Generate a variant for each response type
+                let variants_tokens = variants.iter().map(|(status, type_id)| {
+                    let type_name = self.type_space.get_type(type_id).unwrap();
+                    let variant_name = match status {
+                        OperationResponseStatus::Code(code) => {
+                            format_ident!("Status{}", code)
                         }
+                        OperationResponseStatus::Range(range) => {
+                            format_ident!("Status{}xx", range)
+                        }
+                        OperationResponseStatus::Default => {
+                            format_ident!("Default")
+                        }
+                    };
+
+                    let type_ident = type_name.ident();
+                    let status_str = status.to_string();
+
+                    quote! {
+                        #[doc = concat!("Response for status code ", #status_str)]
+                        #variant_name(#type_ident)
                     }
-                }
-            });
+                }).collect::<Vec<_>>();
 
-            let enum_doc = format!("Response enum for the `{}` operation", method.operation_id);
+                let enum_doc = format!("Response enum for the `{}` operation", method.operation_id);
 
-            // Place the enum in the types module
-            let enum_def = quote! {
-                #[doc = #enum_doc]
-                #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-                pub enum #enum_ident {
-                    #(#variants_tokens),*
-                }
-                
-                #(#from_impls)*
-            };
+                // Place the enum in the types module
+                let enum_def = quote! {
+                    #[doc = #enum_doc]
+                    #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+                    pub enum #enum_ident {
+                        #(#variants_tokens),*
+                    }
+                };
 
-            return Ok(Some(enum_def));
+                Ok(Some(enum_def))
+            },
+            OperationResponseKind::EmptyResponse(name) => {
+                let type_ident = format_ident!("{}", name);
+                let type_doc = format!("Response type for the `{}` operation", method.operation_id);
+
+                // Generate an empty struct for the response
+                let type_def = quote! {
+                    #[doc = #type_doc]
+                    #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+                    pub struct #type_ident {}
+                };
+
+                Ok(Some(type_def))
+            },
+            _ => Ok(None),
         }
-
-        Ok(None)
     }
 }
 
