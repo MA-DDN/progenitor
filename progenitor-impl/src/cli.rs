@@ -241,6 +241,14 @@ impl Generator {
                             }
                         }
                     }
+                    crate::method::OperationResponseKind::EmptyResponse(_) => {
+                        quote! {
+                            {
+                                self.config.success_no_item(&r);
+                                Ok(())
+                            }
+                        }
+                    }
                 };
 
                 let error_output = match error_kind {
@@ -262,6 +270,14 @@ impl Generator {
                         }
                     }
                     crate::method::OperationResponseKind::Multiple { .. } => {
+                        quote! {
+                            {
+                                self.config.error(&r);
+                                Err(anyhow::Error::new(r))
+                            }
+                        }
+                    }
+                    crate::method::OperationResponseKind::EmptyResponse(_) => {
                         quote! {
                             {
                                 self.config.error(&r);
@@ -288,8 +304,8 @@ impl Generator {
                         self.type_space.get_type(&type_id).unwrap().ident()
                     }
                     crate::method::OperationResponseKind::None => quote! { () },
-                    crate::method::OperationResponseKind::Raw => todo!(),
-                    crate::method::OperationResponseKind::Upgrade => todo!(),
+                    crate::method::OperationResponseKind::Raw => quote! { bytes::Bytes },
+                    crate::method::OperationResponseKind::Upgrade => quote! { reqwest::upgrade::Upgraded },
                     crate::method::OperationResponseKind::Multiple {
                         variants: _,
                         enum_name,
@@ -297,6 +313,10 @@ impl Generator {
                         // For paginated APIs with multiple response types, use the enum name
                         let enum_ident = format_ident!("{}", enum_name);
                         quote! { #enum_ident }
+                    }
+                    crate::method::OperationResponseKind::EmptyResponse(name) => {
+                        let type_ident = format_ident!("{}", name);
+                        quote! { types::#type_ident }
                     }
                 };
 
@@ -319,6 +339,14 @@ impl Generator {
                         }
                     }
                     crate::method::OperationResponseKind::Multiple { .. } => {
+                        quote! {
+                            {
+                                self.config.list_end_error(&r);
+                                return Err(anyhow::Error::new(r))
+                            }
+                        }
+                    }
+                    crate::method::OperationResponseKind::EmptyResponse(_) => {
                         quote! {
                             {
                                 self.config.list_end_error(&r);

@@ -1203,6 +1203,14 @@ impl Generator {
                         }
                     }
                 }
+                OperationResponseKind::EmptyResponse(_) => {
+                    // For empty responses, return an error with an empty response
+                    quote! {
+                        Err(Error::ErrorResponse(
+                            ResponseValue::empty(#response_ident)
+                        ))
+                    }
+                }
             };
 
             quote! { #pat => { #decode } }
