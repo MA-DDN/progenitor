@@ -1,13 +1,14 @@
 [workspace]
 members = [
-	"cargo-progenitor",
-	"example-build",
-	"example-macro",
-	"example-wasm",
-	"progenitor",
-	"progenitor-client",
-	"progenitor-impl",
-	"progenitor-macro",
+  "cargo-progenitor",
+  "example-alertmanager",
+  "example-build",
+  "example-macro",
+  "example-wasm",
+  "progenitor",
+  "progenitor-client",
+  "progenitor-impl",
+  "progenitor-macro",
 ]
 
 resolver = "2"
