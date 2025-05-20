@@ -305,7 +305,9 @@ impl Generator {
                     }
                     crate::method::OperationResponseKind::None => quote! { () },
                     crate::method::OperationResponseKind::Raw => quote! { bytes::Bytes },
-                    crate::method::OperationResponseKind::Upgrade => quote! { reqwest::upgrade::Upgraded },
+                    crate::method::OperationResponseKind::Upgrade => {
+                        quote! { reqwest::upgrade::Upgraded }
+                    }
                     crate::method::OperationResponseKind::Multiple {
                         variants: _,
                         enum_name,

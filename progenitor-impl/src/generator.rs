@@ -1,8 +1,21 @@
 // Update the generate_tokens method to generate all response types
 impl Generator {
     pub fn generate_tokens(&mut self, spec: &OpenAPI) -> Result<TokenStream> {
-        // ... existing code ...
-        
+        validate_openapi(spec)?;
+
+        // Convert our components dictionary to schemars
+        let schemas = spec.components.iter().flat_map(|components| {
+            components
+                .schemas
+                .iter()
+                .map(|(name, ref_or_schema)| {
+                    let schema = ref_or_schema.resolve(spec)?;
+                    let name = format!("_{}", name);
+                    Ok((name, schema))
+                })
+                .collect::<Result<Vec<_>>>()?
+        }).collect::<Vec<_>>();
+
         // Generate all response types
         let mut response_types = Vec::new();
         for method in &self.operations {
