@@ -8,7 +8,7 @@ use std::{
 
 use derive_more::Display;
 
-use heck::{ToPascalCase, ToTitleCase};
+use heck::ToPascalCase;
 use openapiv3::{Components, Parameter, ReferenceOr, Response, StatusCode};
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote, ToTokens};
@@ -1106,61 +1106,53 @@ impl Generator {
                 }
             };
 
+            // Create the operation-specific error enum name
+            let error_enum_name = format!("{}Error", method.operation_id.to_pascal_case());
+            let error_enum_ident = format_ident!("{}", error_enum_name);
+
+            // Generate the variant name based on the status code
+            let variant_name = match &response.status_code {
+                OperationResponseStatus::Code(code) => {
+                    format_ident!("Status{}", code)
+                }
+                OperationResponseStatus::Range(range) => {
+                    format_ident!("Status{}xx", range)
+                }
+                OperationResponseStatus::Default => {
+                    format_ident!("Default")
+                }
+            };
+
+            // Generate the decode expression based on the response type
             let decode = match &response.typ {
-                OperationResponseKind::Type(_) => {
-                    // Check if we're using the Multiple response kind
-                    if let OperationResponseKind::Multiple { variants, enum_name } = &error_type {
-                        // If this status code has a specific type, use it
-                        if variants.contains_key(&response.status_code) {
-                            match &response.status_code {
-                                OperationResponseStatus::Code(code) => {
-                                    format_ident!("Status{}", code)
-                                }
-                                OperationResponseStatus::Range(range) => {
-                                    format_ident!("Status{}xx", range)
-                                }
-                                OperationResponseStatus::Default => {
-                                    format_ident!("Default")
-                                }
-                            };
+                OperationResponseKind::Type(type_id) => {
+                    // For typed responses, use the specific type
+                    let type_name = self.type_space.get_type(type_id).unwrap();
+                    let type_ident = type_name.ident();
 
-                            let enum_ident = format_ident!("{}", enum_name);
-
-                            quote! {
-                                Err(Error::ErrorResponse(
-                                    ResponseValue::from_response::<types::#enum_ident>(#response_ident)
-                                        .await?
-                                        .map(|v| v)
-                                ))
-                            }
-                        } else {
-                            // Fallback for status codes not explicitly mapped
-                            quote! {
-                                Err(Error::ErrorResponse(
-                                    ResponseValue::from_response::<_>(#response_ident).await?
-                                ))
-                            }
-                        }
-                    } else {
-                        // Original behavior
-                        quote! {
-                            Err(Error::ErrorResponse(
-                                ResponseValue::from_response::<_>(#response_ident).await?
-                            ))
-                        }
+                    quote! {
+                        Err(Error::ErrorResponse(
+                            ResponseValue::from_response::<#type_ident>(#response_ident)
+                                .await?
+                                .map(|v| types::#error_enum_ident::#variant_name(v))
+                        ))
                     }
                 }
                 OperationResponseKind::None => {
+                    // For empty responses, use unit type
                     quote! {
                         Err(Error::ErrorResponse(
                             ResponseValue::empty(#response_ident)
+                                .map(|_| types::#error_enum_ident::#variant_name(()))
                         ))
                     }
                 }
                 OperationResponseKind::Raw => {
+                    // For raw responses, use ByteStream
                     quote! {
                         Err(Error::ErrorResponse(
                             ResponseValue::stream(#response_ident)
+                                .map(|s| types::#error_enum_ident::#variant_name(s))
                         ))
                     }
                 }
@@ -1175,34 +1167,28 @@ impl Generator {
                     }
                 }
                 OperationResponseKind::Multiple { variants, enum_name } => {
-                    // Handle the case where the response type itself is Multiple
-                    match &response.status_code {
-                        OperationResponseStatus::Code(code) => {
-                            format_ident!("Status{}", code)
-                        }
-                        OperationResponseStatus::Range(range) => {
-                            format_ident!("Status{}xx", range)
-                        }
-                        OperationResponseStatus::Default => {
-                            format_ident!("Default")
-                        }
-                    };
-
-                    let enum_ident = format_ident!("{}", enum_name);
+                    // For multiple response types, use the enum
+                    let response_enum_ident = format_ident!("{}", enum_name);
 
                     if variants.contains_key(&response.status_code) {
                         quote! {
                             Err(Error::ErrorResponse(
-                                ResponseValue::from_response::<types::#enum_ident>(#response_ident)
+                                ResponseValue::from_response::<types::#response_enum_ident>(#response_ident)
                                     .await?
-                                    .map(|v| v)
+                                    .map(|v| types::#error_enum_ident::#variant_name(v))
                             ))
                         }
                     } else {
                         // Fallback if this status code isn't in the variants map
                         quote! {
+                            let bytes = #response_ident.bytes().await.unwrap_or_default();
+                            let value = ::serde_json::from_slice(&bytes).unwrap_or(::serde_json::Value::Null);
                             Err(Error::ErrorResponse(
-                                ResponseValue::from_response::<_>(#response_ident).await?
+                                ResponseValue::new(
+                                    types::#error_enum_ident::UnknownValue(value),
+                                    #response_ident.status(),
+                                    #response_ident.headers().clone()
+                                )
                             ))
                         }
                     }
@@ -1212,6 +1198,7 @@ impl Generator {
                     quote! {
                         Err(Error::ErrorResponse(
                             ResponseValue::empty(#response_ident)
+                                .map(|_| types::#error_enum_ident::#variant_name(()))
                         ))
                     }
                 }
@@ -1236,6 +1223,10 @@ impl Generator {
             }
         });
 
+        // Create the operation-specific error enum name
+        let error_enum_name = format!("{}Error", method.operation_id.to_pascal_case());
+        let error_enum_ident = format_ident!("{}", error_enum_name);
+
         // Generate the catch-all case for other statuses. If the operation
         // specifies a default response, we've already generated a default
         // match as part of error response code handling. (And we've handled
@@ -1245,7 +1236,21 @@ impl Generator {
         let default_response = match method.responses.iter().last() {
             Some(response) if response.status_code.is_default() => quote! {},
             _ => {
-                quote! { _ => Err(Error::UnexpectedResponse(#response_ident)), }
+                // Use the UnknownValue variant of our error enum
+                quote! {
+                    _ => {
+                        let status = #response_ident.status();
+                        let bytes = #response_ident.bytes().await.unwrap_or_default();
+                        let value = ::serde_json::from_slice(&bytes).unwrap_or(::serde_json::Value::Null);
+                        Err(Error::ErrorResponse(
+                            ResponseValue::new(
+                                types::#error_enum_ident::UnknownValue(value),
+                                status,
+                                #response_ident.headers().clone()
+                            )
+                        ))
+                    }
+                }
             }
         };
 
@@ -1356,9 +1361,14 @@ impl Generator {
             }
         };
 
+        // Create the operation-specific error enum name
+        let error_enum_name = format!("{}Error", method.operation_id.to_pascal_case());
+        let error_enum_ident = format_ident!("{}", error_enum_name);
+
+        // Use the operation-specific error enum instead of the generic error type
         Ok(MethodSigBody {
             success: response_type.into_tokens(&self.type_space),
-            error: error_type.into_tokens(&self.type_space),
+            error: quote! { types::#error_enum_ident },
             body: body_impl,
         })
     }
@@ -1670,7 +1680,7 @@ impl Generator {
     ///             param_1,
     ///             param_2,
     ///         } = self;
-    ///     
+    ///
     ///         let param_1 = param_1.map_err(Error::InvalidRequest)?;
     ///         let param_2 = param_1.map_err(Error::InvalidRequest)?;
     ///
@@ -2504,6 +2514,114 @@ impl Generator {
             }
             _ => Ok(None),
         }
+    }
+
+    /// Generate an error enum for an operation
+    ///
+    /// This creates an enum named `{OperationName}Error` with variants for each error status code
+    /// plus an UnknownValue variant that holds a serde_json::Value
+    pub(crate) fn generate_operation_error_enum(
+        &mut self,
+        method: &OperationMethod,
+    ) -> Result<Option<TokenStream>> {
+        // Extract all error responses (4xx and 5xx)
+        let (error_responses, _) = self.extract_responses(method, |status| {
+            matches!(
+                status,
+                OperationResponseStatus::Code(400..=599) | OperationResponseStatus::Range(4..=5)
+            )
+        });
+
+        // If there are no error responses, don't generate an enum
+        if error_responses.is_empty() {
+            return Ok(None);
+        }
+
+        // Create the enum name: {OperationName}Error
+        let enum_name = format!("{}Error", method.operation_id.to_pascal_case());
+        let enum_ident = format_ident!("{}", enum_name);
+
+        // Generate a variant for each error status code
+        let mut variants_tokens = Vec::new();
+
+        // Track status codes we've already processed to avoid duplicates
+        let mut processed_status_codes = BTreeSet::new();
+
+        for response in &error_responses {
+            let variant_name = match &response.status_code {
+                OperationResponseStatus::Code(code) => {
+                    // Skip if we've already processed this status code
+                    if !processed_status_codes.insert(*code) {
+                        continue;
+                    }
+                    format_ident!("Status{}", code)
+                }
+                OperationResponseStatus::Range(range) => {
+                    // Skip if we've already processed this range
+                    if !processed_status_codes.insert(*range + 1000) { // Add 1000 to avoid collision with actual status codes
+                        continue;
+                    }
+                    format_ident!("Status{}xx", range)
+                }
+                OperationResponseStatus::Default => {
+                    // Skip if we've already processed the default
+                    if !processed_status_codes.insert(0) {
+                        continue;
+                    }
+                    format_ident!("Default")
+                }
+            };
+
+            let status_str = response.status_code.to_string();
+            let type_tokens = match &response.typ {
+                OperationResponseKind::Type(type_id) => {
+                    let type_name = self.type_space.get_type(type_id).unwrap();
+                    let type_ident = type_name.ident();
+                    quote! { #type_ident }
+                }
+                OperationResponseKind::None => {
+                    quote! { () }
+                }
+                OperationResponseKind::Raw => {
+                    quote! { ByteStream }
+                }
+                OperationResponseKind::Upgrade => {
+                    quote! { reqwest::Upgraded }
+                }
+                OperationResponseKind::Multiple { enum_name, .. } => {
+                    let enum_ident = format_ident!("{}", enum_name);
+                    quote! { #enum_ident }
+                }
+                OperationResponseKind::EmptyResponse(name) => {
+                    let type_ident = format_ident!("{}", name);
+                    quote! { #type_ident }
+                }
+            };
+
+            variants_tokens.push(quote! {
+                #[doc = concat!("Error response for status code ", #status_str)]
+                #variant_name(#type_tokens)
+            });
+        }
+
+        // Add the UnknownValue variant
+        variants_tokens.push(quote! {
+            /// Represents an unexpected or unknown error response
+            UnknownValue(::serde_json::Value)
+        });
+
+        let enum_doc = format!("Error enum for the `{}` operation", method.operation_id);
+
+        // Place the enum in the types module
+        let enum_def = quote! {
+            #[doc = #enum_doc]
+            #[derive(Debug, Clone, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
+            pub enum #enum_ident {
+                #(#variants_tokens),*
+            }
+        };
+
+        Ok(Some(enum_def))
     }
 }
 

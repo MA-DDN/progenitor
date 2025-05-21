@@ -2924,7 +2924,7 @@ Sends a `GET` request to `/status`
     pub async fn get_status<'a>(
         &'a self,
         body: &'a ::serde_json::Map<::std::string::String, ::serde_json::Value>,
-    ) -> Result<ResponseValue<types::GetStatusResponse>, Error<()>> {
+    ) -> Result<ResponseValue<types::GetStatusResponse>, Error<types::GetStatusError>> {
         let url = format!("{}/status", self.baseurl,);
         let mut header_map = ::reqwest::header::HeaderMap::with_capacity(1usize);
         header_map
@@ -2952,7 +2952,21 @@ Sends a `GET` request to `/status`
         let response = result?;
         match response.status().as_u16() {
             200u16 => ResponseValue::from_response(response).await,
-            _ => Err(Error::UnexpectedResponse(response)),
+            _ => {
+                let status = response.status();
+                let bytes = response.bytes().await.unwrap_or_default();
+                let value = ::serde_json::from_slice(&bytes)
+                    .unwrap_or(::serde_json::Value::Null);
+                Err(
+                    Error::ErrorResponse(
+                        ResponseValue::new(
+                            types::GetStatusError::UnknownValue(value),
+                            status,
+                            response.headers().clone(),
+                        ),
+                    ),
+                )
+            }
         }
     }
     /**Get list of all receivers (name of notification integrations)
@@ -2965,7 +2979,7 @@ Sends a `GET` request to `/receivers`
         body: &'a ::serde_json::Map<::std::string::String, ::serde_json::Value>,
     ) -> Result<
         ResponseValue<::std::vec::Vec<types::GetReceiversResponseItem>>,
-        Error<()>,
+        Error<types::GetReceiversError>,
     > {
         let url = format!("{}/receivers", self.baseurl,);
         let mut header_map = ::reqwest::header::HeaderMap::with_capacity(1usize);
@@ -2994,7 +3008,21 @@ Sends a `GET` request to `/receivers`
         let response = result?;
         match response.status().as_u16() {
             200u16 => ResponseValue::from_response(response).await,
-            _ => Err(Error::UnexpectedResponse(response)),
+            _ => {
+                let status = response.status();
+                let bytes = response.bytes().await.unwrap_or_default();
+                let value = ::serde_json::from_slice(&bytes)
+                    .unwrap_or(::serde_json::Value::Null);
+                Err(
+                    Error::ErrorResponse(
+                        ResponseValue::new(
+                            types::GetReceiversError::UnknownValue(value),
+                            status,
+                            response.headers().clone(),
+                        ),
+                    ),
+                )
+            }
         }
     }
     /**Get a list of silences
@@ -3011,7 +3039,7 @@ Arguments:
         body: &'a ::serde_json::Map<::std::string::String, ::serde_json::Value>,
     ) -> Result<
         ResponseValue<::std::vec::Vec<types::GettableSilence>>,
-        Error<::std::string::String>,
+        Error<types::GetSilencesError>,
     > {
         let url = format!("{}/silences", self.baseurl,);
         let mut header_map = ::reqwest::header::HeaderMap::with_capacity(1usize);
@@ -3044,18 +3072,36 @@ Arguments:
             400u16 => {
                 Err(
                     Error::ErrorResponse(
-                        ResponseValue::from_response::<_>(response).await?,
+                        ResponseValue::from_response::<::std::string::String>(response)
+                            .await?
+                            .map(|v| types::GetSilencesError::Status400(v)),
                     ),
                 )
             }
             500u16 => {
                 Err(
                     Error::ErrorResponse(
-                        ResponseValue::from_response::<_>(response).await?,
+                        ResponseValue::from_response::<::std::string::String>(response)
+                            .await?
+                            .map(|v| types::GetSilencesError::Status500(v)),
                     ),
                 )
             }
-            _ => Err(Error::UnexpectedResponse(response)),
+            _ => {
+                let status = response.status();
+                let bytes = response.bytes().await.unwrap_or_default();
+                let value = ::serde_json::from_slice(&bytes)
+                    .unwrap_or(::serde_json::Value::Null);
+                Err(
+                    Error::ErrorResponse(
+                        ResponseValue::new(
+                            types::GetSilencesError::UnknownValue(value),
+                            status,
+                            response.headers().clone(),
+                        ),
+                    ),
+                )
+            }
         }
     }
     /**Post a new silence or update an existing one
@@ -3068,7 +3114,7 @@ Sends a `POST` request to `/silences`
         body: &'a types::PostSilencesBody,
     ) -> Result<
         ResponseValue<types::PostSilencesResponse>,
-        Error<::std::string::String>,
+        Error<types::PostSilencesError>,
     > {
         let url = format!("{}/silences", self.baseurl,);
         let mut header_map = ::reqwest::header::HeaderMap::with_capacity(1usize);
@@ -3100,18 +3146,36 @@ Sends a `POST` request to `/silences`
             400u16 => {
                 Err(
                     Error::ErrorResponse(
-                        ResponseValue::from_response::<_>(response).await?,
+                        ResponseValue::from_response::<::std::string::String>(response)
+                            .await?
+                            .map(|v| types::PostSilencesError::Status400(v)),
                     ),
                 )
             }
             404u16 => {
                 Err(
                     Error::ErrorResponse(
-                        ResponseValue::from_response::<_>(response).await?,
+                        ResponseValue::from_response::<::std::string::String>(response)
+                            .await?
+                            .map(|v| types::PostSilencesError::Status404(v)),
                     ),
                 )
             }
-            _ => Err(Error::UnexpectedResponse(response)),
+            _ => {
+                let status = response.status();
+                let bytes = response.bytes().await.unwrap_or_default();
+                let value = ::serde_json::from_slice(&bytes)
+                    .unwrap_or(::serde_json::Value::Null);
+                Err(
+                    Error::ErrorResponse(
+                        ResponseValue::new(
+                            types::PostSilencesError::UnknownValue(value),
+                            status,
+                            response.headers().clone(),
+                        ),
+                    ),
+                )
+            }
         }
     }
     /**Get a silence by its ID
@@ -3126,7 +3190,10 @@ Arguments:
         &'a self,
         silence_id: &'a ::uuid::Uuid,
         body: &'a ::serde_json::Map<::std::string::String, ::serde_json::Value>,
-    ) -> Result<ResponseValue<types::GetSilenceResponse>, Error<GetSilenceResponse>> {
+    ) -> Result<
+        ResponseValue<types::GetSilenceResponse>,
+        Error<types::GetSilenceError>,
+    > {
         let url = format!(
             "{}/silence/{}", self.baseurl, encode_path(& silence_id.to_string()),
         );
@@ -3156,19 +3223,38 @@ Arguments:
         let response = result?;
         match response.status().as_u16() {
             200u16 => ResponseValue::from_response(response).await,
-            404u16 => Err(Error::ErrorResponse(ResponseValue::empty(response))),
-            500u16 => {
+            404u16 => {
                 Err(
                     Error::ErrorResponse(
-                        ResponseValue::from_response::<
-                            types::GetSilenceResponse,
-                        >(response)
-                            .await?
-                            .map(|v| v),
+                        ResponseValue::empty(response)
+                            .map(|_| types::GetSilenceError::Status404(())),
                     ),
                 )
             }
-            _ => Err(Error::UnexpectedResponse(response)),
+            500u16 => {
+                Err(
+                    Error::ErrorResponse(
+                        ResponseValue::from_response::<::std::string::String>(response)
+                            .await?
+                            .map(|v| types::GetSilenceError::Status500(v)),
+                    ),
+                )
+            }
+            _ => {
+                let status = response.status();
+                let bytes = response.bytes().await.unwrap_or_default();
+                let value = ::serde_json::from_slice(&bytes)
+                    .unwrap_or(::serde_json::Value::Null);
+                Err(
+                    Error::ErrorResponse(
+                        ResponseValue::new(
+                            types::GetSilenceError::UnknownValue(value),
+                            status,
+                            response.headers().clone(),
+                        ),
+                    ),
+                )
+            }
         }
     }
     /**Delete a silence by its ID
@@ -3183,7 +3269,7 @@ Arguments:
         &'a self,
         silence_id: &'a ::uuid::Uuid,
         body: &'a ::serde_json::Map<::std::string::String, ::serde_json::Value>,
-    ) -> Result<ResponseValue<()>, Error<DeleteSilenceResponse>> {
+    ) -> Result<ResponseValue<()>, Error<types::DeleteSilenceError>> {
         let url = format!(
             "{}/silence/{}", self.baseurl, encode_path(& silence_id.to_string()),
         );
@@ -3209,19 +3295,38 @@ Arguments:
         let response = result?;
         match response.status().as_u16() {
             200u16 => Ok(ResponseValue::empty(response)),
-            404u16 => Err(Error::ErrorResponse(ResponseValue::empty(response))),
-            500u16 => {
+            404u16 => {
                 Err(
                     Error::ErrorResponse(
-                        ResponseValue::from_response::<
-                            types::DeleteSilenceResponse,
-                        >(response)
-                            .await?
-                            .map(|v| v),
+                        ResponseValue::empty(response)
+                            .map(|_| types::DeleteSilenceError::Status404(())),
                     ),
                 )
             }
-            _ => Err(Error::UnexpectedResponse(response)),
+            500u16 => {
+                Err(
+                    Error::ErrorResponse(
+                        ResponseValue::from_response::<::std::string::String>(response)
+                            .await?
+                            .map(|v| types::DeleteSilenceError::Status500(v)),
+                    ),
+                )
+            }
+            _ => {
+                let status = response.status();
+                let bytes = response.bytes().await.unwrap_or_default();
+                let value = ::serde_json::from_slice(&bytes)
+                    .unwrap_or(::serde_json::Value::Null);
+                Err(
+                    Error::ErrorResponse(
+                        ResponseValue::new(
+                            types::DeleteSilenceError::UnknownValue(value),
+                            status,
+                            response.headers().clone(),
+                        ),
+                    ),
+                )
+            }
         }
     }
     /**Get a list of alerts
@@ -3248,7 +3353,7 @@ Arguments:
         body: &'a ::serde_json::Map<::std::string::String, ::serde_json::Value>,
     ) -> Result<
         ResponseValue<::std::vec::Vec<types::GettableAlert>>,
-        Error<::std::string::String>,
+        Error<types::GetAlertsError>,
     > {
         let url = format!("{}/alerts", self.baseurl,);
         let mut header_map = ::reqwest::header::HeaderMap::with_capacity(1usize);
@@ -3286,18 +3391,36 @@ Arguments:
             400u16 => {
                 Err(
                     Error::ErrorResponse(
-                        ResponseValue::from_response::<_>(response).await?,
+                        ResponseValue::from_response::<::std::string::String>(response)
+                            .await?
+                            .map(|v| types::GetAlertsError::Status400(v)),
                     ),
                 )
             }
             500u16 => {
                 Err(
                     Error::ErrorResponse(
-                        ResponseValue::from_response::<_>(response).await?,
+                        ResponseValue::from_response::<::std::string::String>(response)
+                            .await?
+                            .map(|v| types::GetAlertsError::Status500(v)),
                     ),
                 )
             }
-            _ => Err(Error::UnexpectedResponse(response)),
+            _ => {
+                let status = response.status();
+                let bytes = response.bytes().await.unwrap_or_default();
+                let value = ::serde_json::from_slice(&bytes)
+                    .unwrap_or(::serde_json::Value::Null);
+                Err(
+                    Error::ErrorResponse(
+                        ResponseValue::new(
+                            types::GetAlertsError::UnknownValue(value),
+                            status,
+                            response.headers().clone(),
+                        ),
+                    ),
+                )
+            }
         }
     }
     /**Create new Alerts
@@ -3308,7 +3431,7 @@ Sends a `POST` request to `/alerts`
     pub async fn post_alerts<'a>(
         &'a self,
         body: &'a types::PostAlertsBody,
-    ) -> Result<ResponseValue<()>, Error<::std::string::String>> {
+    ) -> Result<ResponseValue<()>, Error<types::PostAlertsError>> {
         let url = format!("{}/alerts", self.baseurl,);
         let mut header_map = ::reqwest::header::HeaderMap::with_capacity(1usize);
         header_map
@@ -3339,18 +3462,36 @@ Sends a `POST` request to `/alerts`
             400u16 => {
                 Err(
                     Error::ErrorResponse(
-                        ResponseValue::from_response::<_>(response).await?,
+                        ResponseValue::from_response::<::std::string::String>(response)
+                            .await?
+                            .map(|v| types::PostAlertsError::Status400(v)),
                     ),
                 )
             }
             500u16 => {
                 Err(
                     Error::ErrorResponse(
-                        ResponseValue::from_response::<_>(response).await?,
+                        ResponseValue::from_response::<::std::string::String>(response)
+                            .await?
+                            .map(|v| types::PostAlertsError::Status500(v)),
                     ),
                 )
             }
-            _ => Err(Error::UnexpectedResponse(response)),
+            _ => {
+                let status = response.status();
+                let bytes = response.bytes().await.unwrap_or_default();
+                let value = ::serde_json::from_slice(&bytes)
+                    .unwrap_or(::serde_json::Value::Null);
+                Err(
+                    Error::ErrorResponse(
+                        ResponseValue::new(
+                            types::PostAlertsError::UnknownValue(value),
+                            status,
+                            response.headers().clone(),
+                        ),
+                    ),
+                )
+            }
         }
     }
     /**Get a list of alert groups
@@ -3375,7 +3516,7 @@ Arguments:
         body: &'a ::serde_json::Map<::std::string::String, ::serde_json::Value>,
     ) -> Result<
         ResponseValue<::std::vec::Vec<types::AlertGroup>>,
-        Error<::std::string::String>,
+        Error<types::GetAlertGroupsError>,
     > {
         let url = format!("{}/alerts/groups", self.baseurl,);
         let mut header_map = ::reqwest::header::HeaderMap::with_capacity(1usize);
@@ -3412,18 +3553,36 @@ Arguments:
             400u16 => {
                 Err(
                     Error::ErrorResponse(
-                        ResponseValue::from_response::<_>(response).await?,
+                        ResponseValue::from_response::<::std::string::String>(response)
+                            .await?
+                            .map(|v| types::GetAlertGroupsError::Status400(v)),
                     ),
                 )
             }
             500u16 => {
                 Err(
                     Error::ErrorResponse(
-                        ResponseValue::from_response::<_>(response).await?,
+                        ResponseValue::from_response::<::std::string::String>(response)
+                            .await?
+                            .map(|v| types::GetAlertGroupsError::Status500(v)),
                     ),
                 )
             }
-            _ => Err(Error::UnexpectedResponse(response)),
+            _ => {
+                let status = response.status();
+                let bytes = response.bytes().await.unwrap_or_default();
+                let value = ::serde_json::from_slice(&bytes)
+                    .unwrap_or(::serde_json::Value::Null);
+                Err(
+                    Error::ErrorResponse(
+                        ResponseValue::new(
+                            types::GetAlertGroupsError::UnknownValue(value),
+                            status,
+                            response.headers().clone(),
+                        ),
+                    ),
+                )
+            }
         }
     }
 }
