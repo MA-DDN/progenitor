@@ -2858,6 +2858,18 @@ pub mod types {
             V
         }
     }
+    ///Error enum for the `get_status` operation
+    #[derive(Debug, Clone, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
+    pub enum GetStatusError {
+        /// Represents an unexpected or unknown error response
+        UnknownValue(::serde_json::Value),
+    }
+    ///Error enum for the `get_receivers` operation
+    #[derive(Debug, Clone, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
+    pub enum GetReceiversError {
+        /// Represents an unexpected or unknown error response
+        UnknownValue(::serde_json::Value),
+    }
     ///Error enum for the `get_silences` operation
     #[derive(Debug, Clone, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
     pub enum GetSilencesError {
@@ -2878,12 +2890,6 @@ pub mod types {
         /// Represents an unexpected or unknown error response
         UnknownValue(::serde_json::Value),
     }
-    ///Response enum for the `get_silence` operation
-    #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-    pub enum GetSilenceResponse {
-        #[doc = concat!("Response for status code ", "500")]
-        Status500(::std::string::String),
-    }
     ///Error enum for the `get_silence` operation
     #[derive(Debug, Clone, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
     pub enum GetSilenceError {
@@ -2893,12 +2899,6 @@ pub mod types {
         Status500(::std::string::String),
         /// Represents an unexpected or unknown error response
         UnknownValue(::serde_json::Value),
-    }
-    ///Response enum for the `delete_silence` operation
-    #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-    pub enum DeleteSilenceResponse {
-        #[doc = concat!("Response for status code ", "500")]
-        Status500(::std::string::String),
     }
     ///Error enum for the `delete_silence` operation
     #[derive(Debug, Clone, PartialEq, ::serde::Serialize, ::serde::Deserialize)]

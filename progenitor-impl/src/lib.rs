@@ -363,32 +363,32 @@ impl Generator {
         let mut response_enums = Vec::new();
         for method in &raw_methods {
             // Extract success responses
-            let (_, success_kind) = self.extract_responses(method, |status| {
+            /*let (_, success_kind) = self.extract_responses(method, |status| {
                 matches!(
                     status,
                     OperationResponseStatus::Code(200..=299)
                         | OperationResponseStatus::Range(2)
                         | OperationResponseStatus::Default
                 )
-            });
+            });*/
 
             // Generate enum if needed
-            if let Some(enum_def) = self.generate_response_enum(method, &success_kind)? {
+            if let Some(enum_def) = self.generate_response_enum(method)? {
                 response_enums.push(enum_def);
             }
 
             // Extract error responses
-            let (_, error_kind) = self.extract_responses(method, |status| {
+            /*let (_, error_kind) = self.extract_responses(method, |status| {
                 !matches!(
                     status,
                     OperationResponseStatus::Code(200..=299) | OperationResponseStatus::Range(2)
                 )
-            });
+            });*/
 
             // Generate enum if needed
-            if let Some(enum_def) = self.generate_response_enum(method, &error_kind)? {
+            /*if let Some(enum_def) = self.generate_response_enum(method, &error_kind)? {
                 response_enums.push(enum_def);
-            }
+            }*/
 
             // Generate operation-specific error enum
             if let Some(error_enum) = self.generate_operation_error_enum(method)? {

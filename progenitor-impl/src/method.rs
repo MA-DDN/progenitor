@@ -2447,73 +2447,97 @@ impl Generator {
         }))
     }
 
+    /// Generate a response enum for an operation *only if there are multiple success response types*
+    ///
+    /// If there is only one success response type, do not generate a response enum.
     pub(crate) fn generate_response_enum(
         &mut self,
         method: &OperationMethod,
-        response_kind: &OperationResponseKind,
     ) -> Result<Option<TokenStream>> {
-        match response_kind {
-            OperationResponseKind::Multiple {
-                ref variants,
-                ref enum_name,
-            } => {
-                let enum_ident = format_ident!("{}", enum_name);
+        // Extract all *success* responses (2xx)
+        let (success_responses, _) = self.extract_responses(method, |status| {
+            matches!(
+                status,
+                OperationResponseStatus::Code(200..=299) | OperationResponseStatus::Range(2)
+            )
+        });
 
-                // Generate a variant for each response type
-                let variants_tokens = variants
-                    .iter()
-                    .map(|(status, type_id)| {
-                        let type_name = self.type_space.get_type(type_id).unwrap();
-                        let variant_name = match status {
-                            OperationResponseStatus::Code(code) => {
-                                format_ident!("Status{}", code)
-                            }
-                            OperationResponseStatus::Range(range) => {
-                                format_ident!("Status{}xx", range)
-                            }
-                            OperationResponseStatus::Default => {
-                                format_ident!("Default")
-                            }
-                        };
-
-                        let type_ident = type_name.ident();
-                        let status_str = status.to_string();
-
-                        quote! {
-                            #[doc = concat!("Response for status code ", #status_str)]
-                            #variant_name(#type_ident)
-                        }
-                    })
-                    .collect::<Vec<_>>();
-
-                let enum_doc = format!("Response enum for the `{}` operation", method.operation_id);
-
-                // Place the enum in the types module
-                let enum_def = quote! {
-                    #[doc = #enum_doc]
-                    #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-                    pub enum #enum_ident {
-                        #(#variants_tokens),*
-                    }
-                };
-
-                Ok(Some(enum_def))
-            }
-            OperationResponseKind::EmptyResponse(name) => {
-                let type_ident = format_ident!("{}", name);
-                let type_doc = format!("Response type for the `{}` operation", method.operation_id);
-
-                // Generate an empty struct for the response
-                let type_def = quote! {
-                    #[doc = #type_doc]
-                    #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-                    pub struct #type_ident {}
-                };
-
-                Ok(Some(type_def))
-            }
-            _ => Ok(None),
+        // Only generate an enum if there are multiple unique success response types
+        let mut unique_types = std::collections::BTreeSet::new();
+        for response in &success_responses {
+            unique_types.insert(&response.typ);
         }
+        if unique_types.len() <= 1 {
+            // Only one success type: do not generate a response enum
+            return Ok(None);
+        }
+
+        // Otherwise, generate the enum as before
+        let enum_name = format!("{}Success", method.operation_id.to_pascal_case());
+        let enum_ident = format_ident!("{}", enum_name);
+
+        let mut variants_tokens = Vec::new();
+        let mut processed_status_codes = std::collections::BTreeSet::new();
+
+        for response in &success_responses {
+            let variant_name = match &response.status_code {
+                OperationResponseStatus::Code(code) => {
+                    if !processed_status_codes.insert(*code) {
+                        continue;
+                    }
+                    format_ident!("Status{}", code)
+                }
+                OperationResponseStatus::Range(range) => {
+                    if !processed_status_codes.insert(*range + 1000) {
+                        continue;
+                    }
+                    format_ident!("Status{}xx", range)
+                }
+                OperationResponseStatus::Default => {
+                    if !processed_status_codes.insert(0) {
+                        continue;
+                    }
+                    format_ident!("Default")
+                }
+            };
+
+            let status_str = response.status_code.to_string();
+            let type_tokens = match &response.typ {
+                OperationResponseKind::Type(type_id) => {
+                    let type_name = self.type_space.get_type(type_id).unwrap();
+                    let type_ident = type_name.ident();
+                    quote! { #type_ident }
+                }
+                OperationResponseKind::None => quote! { () },
+                OperationResponseKind::Raw => quote! { ByteStream },
+                OperationResponseKind::Upgrade => quote! { reqwest::Upgraded },
+                OperationResponseKind::Multiple { enum_name, .. } => {
+                    let enum_ident = format_ident!("{}", enum_name);
+                    quote! { #enum_ident }
+                }
+                OperationResponseKind::EmptyResponse(name) => {
+                    let type_ident = format_ident!("{}", name);
+                    quote! { #type_ident }
+                }
+            };
+
+            variants_tokens.push(quote! {
+                #[doc = concat!("Response for status code ", #status_str)]
+                #variant_name(#type_tokens)
+            });
+        }
+
+        let enum_doc = format!("Response enum for the `{}` operation", method.operation_id);
+
+        let enum_def = quote! {
+            #[doc = #enum_doc]
+            #[derive(Debug, Clone, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
+            pub enum #enum_ident {
+                #(#variants_tokens),*
+            }
+        };
+
+        Ok(Some(enum_def))
     }
 
     /// Generate an error enum for an operation
