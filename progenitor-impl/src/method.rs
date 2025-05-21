@@ -300,8 +300,6 @@ pub(crate) enum OperationResponseKind {
         // Name for the enum that will contain all variants
         enum_name: String,
     },
-    // New variant for empty response types
-    EmptyResponse(String),
 }
 
 impl OperationResponseKind {
@@ -324,10 +322,6 @@ impl OperationResponseKind {
                 // For multiple response types, we'll generate an enum
                 let enum_ident = format_ident!("{}", enum_name);
                 quote! { #enum_ident }
-            }
-            OperationResponseKind::EmptyResponse(name) => {
-                let type_ident = format_ident!("{}", name);
-                quote! { types::#type_ident }
             }
         }
     }
@@ -1076,12 +1070,6 @@ impl Generator {
                         }
                     }
                 }
-                OperationResponseKind::EmptyResponse(_) => {
-                    // For empty responses, return an empty struct
-                    quote! {
-                        Ok(ResponseValue::empty(#response_ident))
-                    }
-                }
             };
 
             quote! { #pat => { #decode } }
@@ -1191,15 +1179,6 @@ impl Generator {
                                 )
                             ))
                         }
-                    }
-                }
-                OperationResponseKind::EmptyResponse(_) => {
-                    // For empty responses, return an error with an empty response
-                    quote! {
-                        Err(Error::ErrorResponse(
-                            ResponseValue::empty(#response_ident)
-                                .map(|_| types::#error_enum_ident::#variant_name(()))
-                        ))
                     }
                 }
             };
@@ -2450,7 +2429,7 @@ impl Generator {
     /// Generate a response enum for an operation *only if there are multiple success response types*
     ///
     /// If there is only one success response type, do not generate a response enum.
-    pub(crate) fn generate_response_enum(
+    pub(crate) fn generate_operation_success_enum(
         &mut self,
         method: &OperationMethod,
     ) -> Result<Option<TokenStream>> {
@@ -2514,10 +2493,6 @@ impl Generator {
                 OperationResponseKind::Multiple { enum_name, .. } => {
                     let enum_ident = format_ident!("{}", enum_name);
                     quote! { #enum_ident }
-                }
-                OperationResponseKind::EmptyResponse(name) => {
-                    let type_ident = format_ident!("{}", name);
-                    quote! { #type_ident }
                 }
             };
 
@@ -2607,10 +2582,6 @@ impl Generator {
                 OperationResponseKind::Multiple { enum_name, .. } => {
                     let enum_ident = format_ident!("{}", enum_name);
                     quote! { #enum_ident }
-                }
-                OperationResponseKind::EmptyResponse(name) => {
-                    let type_ident = format_ident!("{}", name);
-                    quote! { #type_ident }
                 }
             };
 

@@ -368,10 +368,6 @@ impl Generator {
                             },
                         )
                     }
-                    crate::method::OperationResponseKind::EmptyResponse(_) => {
-                        // For empty responses, no value is needed
-                        Default::default()
-                    }
                 };
 
                 match status_code {

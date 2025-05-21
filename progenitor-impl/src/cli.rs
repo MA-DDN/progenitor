@@ -241,14 +241,6 @@ impl Generator {
                             }
                         }
                     }
-                    crate::method::OperationResponseKind::EmptyResponse(_) => {
-                        quote! {
-                            {
-                                self.config.success_no_item(&r);
-                                Ok(())
-                            }
-                        }
-                    }
                 };
 
                 let error_output = match error_kind {
@@ -270,14 +262,6 @@ impl Generator {
                         }
                     }
                     crate::method::OperationResponseKind::Multiple { .. } => {
-                        quote! {
-                            {
-                                self.config.error(&r);
-                                Err(anyhow::Error::new(r))
-                            }
-                        }
-                    }
-                    crate::method::OperationResponseKind::EmptyResponse(_) => {
                         quote! {
                             {
                                 self.config.error(&r);
@@ -316,10 +300,6 @@ impl Generator {
                         let enum_ident = format_ident!("{}", enum_name);
                         quote! { #enum_ident }
                     }
-                    crate::method::OperationResponseKind::EmptyResponse(name) => {
-                        let type_ident = format_ident!("{}", name);
-                        quote! { types::#type_ident }
-                    }
                 };
 
                 let error_output = match error_kind {
@@ -341,14 +321,6 @@ impl Generator {
                         }
                     }
                     crate::method::OperationResponseKind::Multiple { .. } => {
-                        quote! {
-                            {
-                                self.config.list_end_error(&r);
-                                return Err(anyhow::Error::new(r))
-                            }
-                        }
-                    }
-                    crate::method::OperationResponseKind::EmptyResponse(_) => {
                         quote! {
                             {
                                 self.config.list_end_error(&r);

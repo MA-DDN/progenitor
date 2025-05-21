@@ -358,39 +358,17 @@ impl Generator {
             }
         }?;
 
-        // Generate response enums for methods with multiple response types
-        // and error enums for all operations
+        // Generate success and error enums for each operation
+        // which has multiple success responses or multiple error responses.
         let mut response_enums = Vec::new();
-        for method in &raw_methods {
-            // Extract success responses
-            /*let (_, success_kind) = self.extract_responses(method, |status| {
-                matches!(
-                    status,
-                    OperationResponseStatus::Code(200..=299)
-                        | OperationResponseStatus::Range(2)
-                        | OperationResponseStatus::Default
-                )
-            });*/
 
-            // Generate enum if needed
-            if let Some(enum_def) = self.generate_response_enum(method)? {
-                response_enums.push(enum_def);
+        for method in &raw_methods {
+            // Generate success enum if there are multiple success responses
+            if let Some(success_enum) = self.generate_operation_success_enum(method)? {
+                response_enums.push(success_enum);
             }
 
-            // Extract error responses
-            /*let (_, error_kind) = self.extract_responses(method, |status| {
-                !matches!(
-                    status,
-                    OperationResponseStatus::Code(200..=299) | OperationResponseStatus::Range(2)
-                )
-            });*/
-
-            // Generate enum if needed
-            /*if let Some(enum_def) = self.generate_response_enum(method, &error_kind)? {
-                response_enums.push(enum_def);
-            }*/
-
-            // Generate operation-specific error enum
+            // Generate error enum
             if let Some(error_enum) = self.generate_operation_error_enum(method)? {
                 response_enums.push(error_enum);
             }
