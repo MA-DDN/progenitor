@@ -2858,18 +2858,6 @@ pub mod types {
             V
         }
     }
-    ///Error enum for the `get_status` operation
-    #[derive(Debug, Clone, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
-    pub enum GetStatusError {
-        /// Represents an unexpected or unknown error response
-        UnknownValue(::serde_json::Value),
-    }
-    ///Error enum for the `get_receivers` operation
-    #[derive(Debug, Clone, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
-    pub enum GetReceiversError {
-        /// Represents an unexpected or unknown error response
-        UnknownValue(::serde_json::Value),
-    }
     ///Error enum for the `get_silences` operation
     #[derive(Debug, Clone, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
     pub enum GetSilencesError {
@@ -2877,8 +2865,6 @@ pub mod types {
         Status400(::std::string::String),
         #[doc = concat!("Error response for status code ", "500")]
         Status500(::std::string::String),
-        /// Represents an unexpected or unknown error response
-        UnknownValue(::serde_json::Value),
     }
     ///Error enum for the `post_silences` operation
     #[derive(Debug, Clone, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
@@ -2887,8 +2873,6 @@ pub mod types {
         Status400(::std::string::String),
         #[doc = concat!("Error response for status code ", "404")]
         Status404(::std::string::String),
-        /// Represents an unexpected or unknown error response
-        UnknownValue(::serde_json::Value),
     }
     ///Error enum for the `get_silence` operation
     #[derive(Debug, Clone, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
@@ -2897,8 +2881,6 @@ pub mod types {
         Status404(()),
         #[doc = concat!("Error response for status code ", "500")]
         Status500(::std::string::String),
-        /// Represents an unexpected or unknown error response
-        UnknownValue(::serde_json::Value),
     }
     ///Error enum for the `delete_silence` operation
     #[derive(Debug, Clone, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
@@ -2907,8 +2889,6 @@ pub mod types {
         Status404(()),
         #[doc = concat!("Error response for status code ", "500")]
         Status500(::std::string::String),
-        /// Represents an unexpected or unknown error response
-        UnknownValue(::serde_json::Value),
     }
     ///Error enum for the `get_alerts` operation
     #[derive(Debug, Clone, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
@@ -2917,8 +2897,6 @@ pub mod types {
         Status400(::std::string::String),
         #[doc = concat!("Error response for status code ", "500")]
         Status500(::std::string::String),
-        /// Represents an unexpected or unknown error response
-        UnknownValue(::serde_json::Value),
     }
     ///Error enum for the `post_alerts` operation
     #[derive(Debug, Clone, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
@@ -2927,8 +2905,6 @@ pub mod types {
         Status400(::std::string::String),
         #[doc = concat!("Error response for status code ", "500")]
         Status500(::std::string::String),
-        /// Represents an unexpected or unknown error response
-        UnknownValue(::serde_json::Value),
     }
     ///Error enum for the `get_alert_groups` operation
     #[derive(Debug, Clone, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
@@ -2937,8 +2913,6 @@ pub mod types {
         Status400(::std::string::String),
         #[doc = concat!("Error response for status code ", "500")]
         Status500(::std::string::String),
-        /// Represents an unexpected or unknown error response
-        UnknownValue(::serde_json::Value),
     }
 }
 #[derive(Clone, Debug)]
@@ -3006,7 +2980,7 @@ Sends a `GET` request to `/status`
     pub async fn get_status<'a>(
         &'a self,
         body: &'a ::serde_json::Map<::std::string::String, ::serde_json::Value>,
-    ) -> Result<ResponseValue<types::GetStatusResponse>, Error<types::GetStatusError>> {
+    ) -> Result<ResponseValue<types::GetStatusResponse>, Error<()>> {
         let url = format!("{}/status", self.baseurl,);
         let mut header_map = ::reqwest::header::HeaderMap::with_capacity(1usize);
         header_map
@@ -3034,21 +3008,7 @@ Sends a `GET` request to `/status`
         let response = result?;
         match response.status().as_u16() {
             200u16 => ResponseValue::from_response(response).await,
-            _ => {
-                let status = response.status();
-                let bytes = response.bytes().await.unwrap_or_default();
-                let value = ::serde_json::from_slice(&bytes)
-                    .unwrap_or(::serde_json::Value::Null);
-                Err(
-                    Error::ErrorResponse(
-                        ResponseValue::new(
-                            types::GetStatusError::UnknownValue(value),
-                            status,
-                            response.headers().clone(),
-                        ),
-                    ),
-                )
-            }
+            _ => Err(Error::ErrorResponse(ResponseValue::empty(response))),
         }
     }
     /**Get list of all receivers (name of notification integrations)
@@ -3061,7 +3021,7 @@ Sends a `GET` request to `/receivers`
         body: &'a ::serde_json::Map<::std::string::String, ::serde_json::Value>,
     ) -> Result<
         ResponseValue<::std::vec::Vec<types::GetReceiversResponseItem>>,
-        Error<types::GetReceiversError>,
+        Error<()>,
     > {
         let url = format!("{}/receivers", self.baseurl,);
         let mut header_map = ::reqwest::header::HeaderMap::with_capacity(1usize);
@@ -3090,21 +3050,7 @@ Sends a `GET` request to `/receivers`
         let response = result?;
         match response.status().as_u16() {
             200u16 => ResponseValue::from_response(response).await,
-            _ => {
-                let status = response.status();
-                let bytes = response.bytes().await.unwrap_or_default();
-                let value = ::serde_json::from_slice(&bytes)
-                    .unwrap_or(::serde_json::Value::Null);
-                Err(
-                    Error::ErrorResponse(
-                        ResponseValue::new(
-                            types::GetReceiversError::UnknownValue(value),
-                            status,
-                            response.headers().clone(),
-                        ),
-                    ),
-                )
-            }
+            _ => Err(Error::ErrorResponse(ResponseValue::empty(response))),
         }
     }
     /**Get a list of silences
@@ -3169,21 +3115,7 @@ Arguments:
                     ),
                 )
             }
-            _ => {
-                let status = response.status();
-                let bytes = response.bytes().await.unwrap_or_default();
-                let value = ::serde_json::from_slice(&bytes)
-                    .unwrap_or(::serde_json::Value::Null);
-                Err(
-                    Error::ErrorResponse(
-                        ResponseValue::new(
-                            types::GetSilencesError::UnknownValue(value),
-                            status,
-                            response.headers().clone(),
-                        ),
-                    ),
-                )
-            }
+            _ => Err(Error::ErrorResponse(ResponseValue::empty(response))),
         }
     }
     /**Post a new silence or update an existing one
@@ -3243,21 +3175,7 @@ Sends a `POST` request to `/silences`
                     ),
                 )
             }
-            _ => {
-                let status = response.status();
-                let bytes = response.bytes().await.unwrap_or_default();
-                let value = ::serde_json::from_slice(&bytes)
-                    .unwrap_or(::serde_json::Value::Null);
-                Err(
-                    Error::ErrorResponse(
-                        ResponseValue::new(
-                            types::PostSilencesError::UnknownValue(value),
-                            status,
-                            response.headers().clone(),
-                        ),
-                    ),
-                )
-            }
+            _ => Err(Error::ErrorResponse(ResponseValue::empty(response))),
         }
     }
     /**Get a silence by its ID
@@ -3322,21 +3240,7 @@ Arguments:
                     ),
                 )
             }
-            _ => {
-                let status = response.status();
-                let bytes = response.bytes().await.unwrap_or_default();
-                let value = ::serde_json::from_slice(&bytes)
-                    .unwrap_or(::serde_json::Value::Null);
-                Err(
-                    Error::ErrorResponse(
-                        ResponseValue::new(
-                            types::GetSilenceError::UnknownValue(value),
-                            status,
-                            response.headers().clone(),
-                        ),
-                    ),
-                )
-            }
+            _ => Err(Error::ErrorResponse(ResponseValue::empty(response))),
         }
     }
     /**Delete a silence by its ID
@@ -3394,21 +3298,7 @@ Arguments:
                     ),
                 )
             }
-            _ => {
-                let status = response.status();
-                let bytes = response.bytes().await.unwrap_or_default();
-                let value = ::serde_json::from_slice(&bytes)
-                    .unwrap_or(::serde_json::Value::Null);
-                Err(
-                    Error::ErrorResponse(
-                        ResponseValue::new(
-                            types::DeleteSilenceError::UnknownValue(value),
-                            status,
-                            response.headers().clone(),
-                        ),
-                    ),
-                )
-            }
+            _ => Err(Error::ErrorResponse(ResponseValue::empty(response))),
         }
     }
     /**Get a list of alerts
@@ -3488,21 +3378,7 @@ Arguments:
                     ),
                 )
             }
-            _ => {
-                let status = response.status();
-                let bytes = response.bytes().await.unwrap_or_default();
-                let value = ::serde_json::from_slice(&bytes)
-                    .unwrap_or(::serde_json::Value::Null);
-                Err(
-                    Error::ErrorResponse(
-                        ResponseValue::new(
-                            types::GetAlertsError::UnknownValue(value),
-                            status,
-                            response.headers().clone(),
-                        ),
-                    ),
-                )
-            }
+            _ => Err(Error::ErrorResponse(ResponseValue::empty(response))),
         }
     }
     /**Create new Alerts
@@ -3559,21 +3435,7 @@ Sends a `POST` request to `/alerts`
                     ),
                 )
             }
-            _ => {
-                let status = response.status();
-                let bytes = response.bytes().await.unwrap_or_default();
-                let value = ::serde_json::from_slice(&bytes)
-                    .unwrap_or(::serde_json::Value::Null);
-                Err(
-                    Error::ErrorResponse(
-                        ResponseValue::new(
-                            types::PostAlertsError::UnknownValue(value),
-                            status,
-                            response.headers().clone(),
-                        ),
-                    ),
-                )
-            }
+            _ => Err(Error::ErrorResponse(ResponseValue::empty(response))),
         }
     }
     /**Get a list of alert groups
@@ -3650,21 +3512,7 @@ Arguments:
                     ),
                 )
             }
-            _ => {
-                let status = response.status();
-                let bytes = response.bytes().await.unwrap_or_default();
-                let value = ::serde_json::from_slice(&bytes)
-                    .unwrap_or(::serde_json::Value::Null);
-                Err(
-                    Error::ErrorResponse(
-                        ResponseValue::new(
-                            types::GetAlertGroupsError::UnknownValue(value),
-                            status,
-                            response.headers().clone(),
-                        ),
-                    ),
-                )
-            }
+            _ => Err(Error::ErrorResponse(ResponseValue::empty(response))),
         }
     }
 }

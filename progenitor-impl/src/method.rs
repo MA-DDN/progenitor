@@ -843,6 +843,7 @@ impl Generator {
             })
             .collect::<Vec<_>>();
 
+        // Headers
         let headers = method
             .params
             .iter()
@@ -922,8 +923,10 @@ impl Generator {
         };
 
         // Generate code to handle the body param.
-        let body_func = method.params.iter().filter_map(|param| {
-            match (&param.kind, &param.typ) {
+        let body_func = method
+            .params
+            .iter()
+            .filter_map(|param| match (&param.kind, &param.typ) {
                 (
                     OperationParameterKind::Body(BodyContentType::OctetStream),
                     OperationParameterType::RawBody,
@@ -967,245 +970,182 @@ impl Generator {
                     unreachable!("invalid body kind/type combination")
                 }
                 _ => None,
-            }
         });
         // ... and there can be at most one body.
         assert!(body_func.clone().count() <= 1);
 
-        let (success_response_items, response_type) =
+        // Success response handling
+        let (success_response_items, response_type_kind) =
             self.extract_responses(method, OperationResponseStatus::is_success_or_default);
 
-        let success_response_matches = success_response_items.iter().map(|response| {
-            let pat = match &response.status_code {
-                OperationResponseStatus::Code(code) => quote! { #code },
-                OperationResponseStatus::Range(_) | OperationResponseStatus::Default => {
-                    quote! { 200 ..= 299 }
-                }
-            };
-
-            let decode = match &response.typ {
-                OperationResponseKind::Type(_) => {
-                    // Check if we're using the Multiple response kind
-                    if let OperationResponseKind::Multiple {
-                        variants,
-                        enum_name,
-                    } = &response_type
-                    {
-                        // If this status code has a specific type, use it
-                        if variants.contains_key(&response.status_code) {
-                            let variant_name = match &response.status_code {
-                                OperationResponseStatus::Code(code) => {
-                                    format_ident!("Status{}", code)
-                                }
-                                OperationResponseStatus::Range(range) => {
-                                    format_ident!("Status{}xx", range)
-                                }
-                                OperationResponseStatus::Default => {
-                                    format_ident!("Default")
-                                }
-                            };
-
-                            let enum_ident = format_ident!("{}", enum_name);
-
-                            quote! {
-                                ResponseValue::from_response(#response_ident).await
-                                    .map(|v| types::#enum_ident::#variant_name(v))
-                            }
-                        } else {
-                            // Fallback for status codes not explicitly mapped
-                            quote! {
-                                ResponseValue::from_response(#response_ident).await
-                            }
-                        }
-                    } else {
-                        // Original behavior
-                        quote! {
-                            ResponseValue::from_response(#response_ident).await
-                        }
-                    }
-                }
-                OperationResponseKind::None => {
-                    quote! {
-                        Ok(ResponseValue::empty(#response_ident))
-                    }
-                }
-                OperationResponseKind::Raw => {
-                    quote! {
-                        Ok(ResponseValue::stream(#response_ident))
-                    }
-                }
-                OperationResponseKind::Upgrade => {
-                    quote! {
-                        ResponseValue::upgrade(#response_ident).await
-                    }
-                }
-                OperationResponseKind::Multiple {
-                    variants,
-                    enum_name,
-                } => {
-                    // Handle the case where the response type itself is Multiple
-                    let variant_name = match &response.status_code {
-                        OperationResponseStatus::Code(code) => {
-                            format_ident!("Status{}", code)
-                        }
-                        OperationResponseStatus::Range(range) => {
-                            format_ident!("Status{}xx", range)
-                        }
-                        OperationResponseStatus::Default => {
-                            format_ident!("Default")
+        let (success_type, success_response_matches) = match &response_type_kind {
+            OperationResponseKind::Multiple { enum_name, .. } => {
+                let enum_ident = format_ident!("{}", enum_name);
+                let matches = success_response_items.iter().map(|response| {
+                    let pat = match &response.status_code {
+                        OperationResponseStatus::Code(code) => quote! { #code },
+                        OperationResponseStatus::Range(_) | OperationResponseStatus::Default => {
+                            quote! { 200 ..= 299 }
                         }
                     };
-
-                    let enum_ident = format_ident!("{}", enum_name);
-
-                    if variants.contains_key(&response.status_code) {
-                        quote! {
+                    let variant_name = match &response.status_code {
+                        OperationResponseStatus::Code(code) => format_ident!("Status{}", code),
+                        OperationResponseStatus::Range(range) => format_ident!("Status{}xx", range),
+                        OperationResponseStatus::Default => format_ident!("Default"),
+                    };
+                    quote! {
+                        #pat => {
                             ResponseValue::from_response(#response_ident).await
                                 .map(|v| types::#enum_ident::#variant_name(v))
                         }
-                    } else {
-                        // Fallback if this status code isn't in the variants map
-                        quote! {
-                            ResponseValue::from_response(#response_ident).await
-                        }
                     }
-                }
-            };
+                });
+                (quote! { types::#enum_ident }, matches.collect::<Vec<_>>())
+            }
+            _ => {
+                let matches = success_response_items.iter().map(|response| {
+                    let pat = match &response.status_code {
+                        OperationResponseStatus::Code(code) => quote! { #code },
+                        OperationResponseStatus::Range(_) | OperationResponseStatus::Default => {
+                            quote! { 200 ..= 299 }
+                        }
+                    };
+                    match &response.typ {
+                        OperationResponseKind::Type(_) => quote! {
+                            #pat => {
+                                ResponseValue::from_response(#response_ident).await
+                            }
+                        },
+                        OperationResponseKind::None => quote! {
+                            #pat => {
+                                Ok(ResponseValue::empty(#response_ident))
+                            }
+                        },
+                        OperationResponseKind::Raw => quote! {
+                            #pat => {
+                                Ok(ResponseValue::stream(#response_ident))
+                            }
+                        },
+                        OperationResponseKind::Upgrade => quote! {
+                            #pat => {
+                                ResponseValue::upgrade(#response_ident).await
+                            }
+                        },
+                        OperationResponseKind::Multiple { .. } => unreachable!(),
+                    }
+                });
+                (
+                    response_type_kind.clone().into_tokens(&self.type_space),
+                    matches.collect::<Vec<_>>(),
+                )
+            }
+        };
 
-            quote! { #pat => { #decode } }
-        });
-
-        // Errors
-        let (error_response_items, error_type) =
+        // Error response handling
+        let (error_response_items, error_type_kind) =
             self.extract_responses(method, OperationResponseStatus::is_error_or_default);
 
-        let error_response_matches = error_response_items.iter().map(|response| {
+        let (error_type, error_response_matches, default_response) = if error_response_items
+            .is_empty()
+        {
+            (
+                quote! { () },
+                Vec::<TokenStream>::new(),
+                quote! {
+                    _ => Err(Error::ErrorResponse(ResponseValue::empty(#response_ident))),
+                },
+            )
+        } else {
+            let error_enum_name = format!("{}Error", method.operation_id.to_pascal_case());
+            let error_enum_ident = format_ident!("{}", error_enum_name);
+
+            let matches = error_response_items.iter().map(|response| {
             let pat = match &response.status_code {
-                OperationResponseStatus::Code(code) => {
-                    quote! { #code }
-                }
+                OperationResponseStatus::Code(code) => quote! { #code },
                 OperationResponseStatus::Range(r) => {
                     let min = r * 100;
                     let max = min + 99;
                     quote! { #min ..= #max }
                 }
-                OperationResponseStatus::Default => {
-                    quote! { _ }
-                }
+                OperationResponseStatus::Default => quote! { _ },
             };
-
-            // Create the operation-specific error enum name
-            let error_enum_name = format!("{}Error", method.operation_id.to_pascal_case());
-            let error_enum_ident = format_ident!("{}", error_enum_name);
-
-            let decode = match &response.typ {
-                OperationResponseKind::Type(_) => {
-                    // Check if we're using the Multiple response kind
-                    if let OperationResponseKind::Multiple { variants, enum_name } = &error_type {
-                        // If this status code has a specific type, use it
-                        if variants.contains_key(&response.status_code) {
-                            match &response.status_code {
-                                OperationResponseStatus::Code(code) => {
-                                    format_ident!("Status{}", code)
-                                }
-                                OperationResponseStatus::Range(range) => {
-                                    format_ident!("Status{}xx", range)
-                                }
-                                OperationResponseStatus::Default => {
-                                    format_ident!("Default")
-                                }
-                            };
-
-                            let enum_ident = format_ident!("{}", enum_name);
-
-                            quote! {
-                                Err(Error::ErrorResponse(
-                                    ResponseValue::from_response::<types::#enum_ident>(#response_ident)
-                                        .await?
-                                        .map(|v| v)
-                                ))
-                            }
-                        } else {
-                            // Fallback for status codes not explicitly mapped
-                            quote! {
-                                Err(Error::ErrorResponse(
-                                    ResponseValue::from_response::<_>(#response_ident).await?
-                                ))
-                            }
-                        }
-                    } else {
-                        // Original behavior
-                        quote! {
+            let variant_name = match &response.status_code {
+                OperationResponseStatus::Code(code) => format_ident!("Status{}", code),
+                OperationResponseStatus::Range(range) => format_ident!("Status{}xx", range),
+                OperationResponseStatus::Default => format_ident!("Default"),
+            };
+            match &response.typ {
+                OperationResponseKind::Type(type_id) => {
+                    let type_name = self.type_space.get_type(type_id).unwrap();
+                    let type_ident = type_name.ident();
+                    quote! {
+                        #pat => {
                             Err(Error::ErrorResponse(
-                                ResponseValue::from_response::<_>(#response_ident).await?
+                                ResponseValue::from_response::<#type_ident>(#response_ident)
+                                    .await?
+                                    .map(|v| types::#error_enum_ident::#variant_name(v))
                             ))
                         }
                     }
                 }
-                OperationResponseKind::None => {
-                    quote! {
+                OperationResponseKind::None => quote! {
+                    #pat => {
                         Err(Error::ErrorResponse(
                             ResponseValue::empty(#response_ident)
+                                .map(|_| types::#error_enum_ident::#variant_name(()))
                         ))
                     }
-                }
-                OperationResponseKind::Raw => {
-                    quote! {
+                },
+                OperationResponseKind::Raw => quote! {
+                    #pat => {
                         Err(Error::ErrorResponse(
                             ResponseValue::stream(#response_ident)
+                                .map(|s| types::#error_enum_ident::#variant_name(s))
                         ))
                     }
-                }
-                OperationResponseKind::Upgrade => {
-                    if response.status_code == OperationResponseStatus::Default {
-                        return quote! {}; // catch-all handled below
-                    } else {
-                        todo!(
-                            "non-default error response handling for \
-                                upgrade requests is not yet implemented"
-                        );
+                },
+                OperationResponseKind::Upgrade => quote! {
+                    #pat => {
+                        Err(Error::ErrorResponse(
+                            ResponseValue::upgrade(#response_ident).await
+                                .map(|u| types::#error_enum_ident::#variant_name(u))
+                        ))
                     }
-                }
-                OperationResponseKind::Multiple { variants, enum_name } => {
-                    // Handle the case where the response type itself is Multiple
-                    match &response.status_code {
-                        OperationResponseStatus::Code(code) => {
-                            format_ident!("Status{}", code)
-                        }
-                        OperationResponseStatus::Range(range) => {
-                            format_ident!("Status{}xx", range)
-                        }
-                        OperationResponseStatus::Default => {
-                            format_ident!("Default")
-                        }
-                    };
-
-                    let enum_ident = format_ident!("{}", enum_name);
-
-                    if variants.contains_key(&response.status_code) {
-                        quote! {
+                },
+                OperationResponseKind::Multiple { enum_name, .. } => {
+                    let response_enum_ident = format_ident!("{}", enum_name);
+                    quote! {
+                        #pat => {
                             Err(Error::ErrorResponse(
-                                ResponseValue::from_response::<types::#enum_ident>(#response_ident)
+                                ResponseValue::from_response::<types::#response_enum_ident>(#response_ident)
                                     .await?
-                                    .map(|v| v)
-                            ))
-                        }
-                    } else {
-                        // Fallback if this status code isn't in the variants map
-                        quote! {
-                            Err(Error::ErrorResponse(
-                                ResponseValue::from_response::<_>(#response_ident).await?
+                                    .map(|v| types::#error_enum_ident::#variant_name(v))
                             ))
                         }
                     }
                 }
+            }
+        }).collect::<Vec<_>>();
+
+            let default_response = match error_response_items
+                .iter()
+                .any(|r| matches!(r.status_code, OperationResponseStatus::Default))
+            {
+                true => quote! {},
+                false => quote! {
+                    _ => Err(Error::ErrorResponse(ResponseValue::empty(#response_ident))),
+                },
             };
 
-            quote! { #pat => { #decode } }
-        });
+            (
+                quote! { types::#error_enum_ident },
+                matches,
+                default_response,
+            )
+        };
 
         let accept_header = matches!(
-            (&response_type, &error_type),
+            (&response_type_kind, &error_type_kind),
             (OperationResponseKind::Type(_), _)
                 | (OperationResponseKind::None, OperationResponseKind::Type(_))
         )
@@ -1219,37 +1159,6 @@ impl Generator {
                     )
             }
         });
-
-        // Create the operation-specific error enum name
-        let error_enum_name = format!("{}Error", method.operation_id.to_pascal_case());
-        let error_enum_ident = format_ident!("{}", error_enum_name);
-
-        // Generate the catch-all case for other statuses. If the operation
-        // specifies a default response, we've already generated a default
-        // match as part of error response code handling. (And we've handled
-        // the default as a success response as well.) Otherwise the catch-all
-        // produces an error corresponding to a response not specified in the
-        // API description.
-        let default_response = match method.responses.iter().last() {
-            Some(response) if response.status_code.is_default() => quote! {},
-            _ => {
-                // Use the UnknownValue variant of our error enum
-                quote! {
-                    _ => {
-                        let status = #response_ident.status();
-                        let bytes = #response_ident.bytes().await.unwrap_or_default();
-                        let value = ::serde_json::from_slice(&bytes).unwrap_or(::serde_json::Value::Null);
-                        Err(Error::ErrorResponse(
-                            ResponseValue::new(
-                                types::#error_enum_ident::UnknownValue(value),
-                                status,
-                                #response_ident.headers().clone()
-                            )
-                        ))
-                    }
-                }
-            }
-        };
 
         let inner = match has_inner {
             true => quote! { &#client_value.inner, },
@@ -1358,14 +1267,9 @@ impl Generator {
             }
         };
 
-        // Create the operation-specific error enum name
-        let error_enum_name = format!("{}Error", method.operation_id.to_pascal_case());
-        let error_enum_ident = format_ident!("{}", error_enum_name);
-
-        // Use the operation-specific error enum instead of the generic error type
         Ok(MethodSigBody {
-            success: response_type.into_tokens(&self.type_space),
-            error: quote! { types::#error_enum_ident },
+            success: success_type,
+            error: error_type,
             body: body_impl,
         })
     }
