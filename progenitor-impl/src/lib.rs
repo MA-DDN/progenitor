@@ -396,7 +396,19 @@ impl Generator {
             }
         }
 
-        let types = self.type_space.to_stream();
+        // Get the types from the type space
+        let type_space_stream = self.type_space.to_stream();
+
+        // Combine the type space types with the response enums
+        let types = if response_enums.is_empty() {
+            type_space_stream
+        } else {
+            quote! {
+                #type_space_stream
+
+                #(#response_enums)*
+            }
+        };
 
         let (inner_type, inner_fn_value) = match self.settings.inner_type.as_ref() {
             Some(inner_type) => (inner_type.clone(), quote! { &self.inner }),

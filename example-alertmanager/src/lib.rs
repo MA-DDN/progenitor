@@ -2858,6 +2858,88 @@ pub mod types {
             V
         }
     }
+    ///Error enum for the `get_silences` operation
+    #[derive(Debug, Clone, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
+    pub enum GetSilencesError {
+        #[doc = concat!("Error response for status code ", "400")]
+        Status400(::std::string::String),
+        #[doc = concat!("Error response for status code ", "500")]
+        Status500(::std::string::String),
+        /// Represents an unexpected or unknown error response
+        UnknownValue(::serde_json::Value),
+    }
+    ///Error enum for the `post_silences` operation
+    #[derive(Debug, Clone, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
+    pub enum PostSilencesError {
+        #[doc = concat!("Error response for status code ", "400")]
+        Status400(::std::string::String),
+        #[doc = concat!("Error response for status code ", "404")]
+        Status404(::std::string::String),
+        /// Represents an unexpected or unknown error response
+        UnknownValue(::serde_json::Value),
+    }
+    ///Response enum for the `get_silence` operation
+    #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+    pub enum GetSilenceResponse {
+        #[doc = concat!("Response for status code ", "500")]
+        Status500(::std::string::String),
+    }
+    ///Error enum for the `get_silence` operation
+    #[derive(Debug, Clone, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
+    pub enum GetSilenceError {
+        #[doc = concat!("Error response for status code ", "404")]
+        Status404(()),
+        #[doc = concat!("Error response for status code ", "500")]
+        Status500(::std::string::String),
+        /// Represents an unexpected or unknown error response
+        UnknownValue(::serde_json::Value),
+    }
+    ///Response enum for the `delete_silence` operation
+    #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+    pub enum DeleteSilenceResponse {
+        #[doc = concat!("Response for status code ", "500")]
+        Status500(::std::string::String),
+    }
+    ///Error enum for the `delete_silence` operation
+    #[derive(Debug, Clone, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
+    pub enum DeleteSilenceError {
+        #[doc = concat!("Error response for status code ", "404")]
+        Status404(()),
+        #[doc = concat!("Error response for status code ", "500")]
+        Status500(::std::string::String),
+        /// Represents an unexpected or unknown error response
+        UnknownValue(::serde_json::Value),
+    }
+    ///Error enum for the `get_alerts` operation
+    #[derive(Debug, Clone, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
+    pub enum GetAlertsError {
+        #[doc = concat!("Error response for status code ", "400")]
+        Status400(::std::string::String),
+        #[doc = concat!("Error response for status code ", "500")]
+        Status500(::std::string::String),
+        /// Represents an unexpected or unknown error response
+        UnknownValue(::serde_json::Value),
+    }
+    ///Error enum for the `post_alerts` operation
+    #[derive(Debug, Clone, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
+    pub enum PostAlertsError {
+        #[doc = concat!("Error response for status code ", "400")]
+        Status400(::std::string::String),
+        #[doc = concat!("Error response for status code ", "500")]
+        Status500(::std::string::String),
+        /// Represents an unexpected or unknown error response
+        UnknownValue(::serde_json::Value),
+    }
+    ///Error enum for the `get_alert_groups` operation
+    #[derive(Debug, Clone, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
+    pub enum GetAlertGroupsError {
+        #[doc = concat!("Error response for status code ", "400")]
+        Status400(::std::string::String),
+        #[doc = concat!("Error response for status code ", "500")]
+        Status500(::std::string::String),
+        /// Represents an unexpected or unknown error response
+        UnknownValue(::serde_json::Value),
+    }
 }
 #[derive(Clone, Debug)]
 /**Client for Alertmanager API

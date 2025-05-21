@@ -20,12 +20,12 @@ impl Generator {
         let mut response_types = Vec::new();
         for method in &self.operations {
             // Generate success response types
-            let (_, success_response_kind) = 
+            /*let (_, success_response_kind) = 
                 self.extract_responses(method, OperationResponseStatus::is_success_or_default);
             
             if let Some(type_def) = self.generate_response_enum(method, &success_response_kind)? {
                 response_types.push(type_def);
-            }
+            }*/
             
             // Generate error response types
             let (_, error_response_kind) = 
