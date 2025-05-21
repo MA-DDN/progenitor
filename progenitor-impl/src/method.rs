@@ -1075,7 +1075,7 @@ impl Generator {
             quote! { #pat => { #decode } }
         });
 
-        // Errors...
+        // Errors
         let (error_response_items, error_type) =
             self.extract_responses(method, OperationResponseStatus::is_error_or_default);
 
@@ -1098,49 +1098,61 @@ impl Generator {
             let error_enum_name = format!("{}Error", method.operation_id.to_pascal_case());
             let error_enum_ident = format_ident!("{}", error_enum_name);
 
-            // Generate the variant name based on the status code
-            let variant_name = match &response.status_code {
-                OperationResponseStatus::Code(code) => {
-                    format_ident!("Status{}", code)
-                }
-                OperationResponseStatus::Range(range) => {
-                    format_ident!("Status{}xx", range)
-                }
-                OperationResponseStatus::Default => {
-                    format_ident!("Default")
-                }
-            };
-
-            // Generate the decode expression based on the response type
             let decode = match &response.typ {
-                OperationResponseKind::Type(type_id) => {
-                    // For typed responses, use the specific type
-                    let type_name = self.type_space.get_type(type_id).unwrap();
-                    let type_ident = type_name.ident();
+                OperationResponseKind::Type(_) => {
+                    // Check if we're using the Multiple response kind
+                    if let OperationResponseKind::Multiple { variants, enum_name } = &error_type {
+                        // If this status code has a specific type, use it
+                        if variants.contains_key(&response.status_code) {
+                            match &response.status_code {
+                                OperationResponseStatus::Code(code) => {
+                                    format_ident!("Status{}", code)
+                                }
+                                OperationResponseStatus::Range(range) => {
+                                    format_ident!("Status{}xx", range)
+                                }
+                                OperationResponseStatus::Default => {
+                                    format_ident!("Default")
+                                }
+                            };
 
-                    quote! {
-                        Err(Error::ErrorResponse(
-                            ResponseValue::from_response::<#type_ident>(#response_ident)
-                                .await?
-                                .map(|v| types::#error_enum_ident::#variant_name(v))
-                        ))
+                            let enum_ident = format_ident!("{}", enum_name);
+
+                            quote! {
+                                Err(Error::ErrorResponse(
+                                    ResponseValue::from_response::<types::#enum_ident>(#response_ident)
+                                        .await?
+                                        .map(|v| v)
+                                ))
+                            }
+                        } else {
+                            // Fallback for status codes not explicitly mapped
+                            quote! {
+                                Err(Error::ErrorResponse(
+                                    ResponseValue::from_response::<_>(#response_ident).await?
+                                ))
+                            }
+                        }
+                    } else {
+                        // Original behavior
+                        quote! {
+                            Err(Error::ErrorResponse(
+                                ResponseValue::from_response::<_>(#response_ident).await?
+                            ))
+                        }
                     }
                 }
                 OperationResponseKind::None => {
-                    // For empty responses, use unit type
                     quote! {
                         Err(Error::ErrorResponse(
                             ResponseValue::empty(#response_ident)
-                                .map(|_| types::#error_enum_ident::#variant_name(()))
                         ))
                     }
                 }
                 OperationResponseKind::Raw => {
-                    // For raw responses, use ByteStream
                     quote! {
                         Err(Error::ErrorResponse(
                             ResponseValue::stream(#response_ident)
-                                .map(|s| types::#error_enum_ident::#variant_name(s))
                         ))
                     }
                 }
@@ -1155,28 +1167,34 @@ impl Generator {
                     }
                 }
                 OperationResponseKind::Multiple { variants, enum_name } => {
-                    // For multiple response types, use the enum
-                    let response_enum_ident = format_ident!("{}", enum_name);
+                    // Handle the case where the response type itself is Multiple
+                    match &response.status_code {
+                        OperationResponseStatus::Code(code) => {
+                            format_ident!("Status{}", code)
+                        }
+                        OperationResponseStatus::Range(range) => {
+                            format_ident!("Status{}xx", range)
+                        }
+                        OperationResponseStatus::Default => {
+                            format_ident!("Default")
+                        }
+                    };
+
+                    let enum_ident = format_ident!("{}", enum_name);
 
                     if variants.contains_key(&response.status_code) {
                         quote! {
                             Err(Error::ErrorResponse(
-                                ResponseValue::from_response::<types::#response_enum_ident>(#response_ident)
+                                ResponseValue::from_response::<types::#enum_ident>(#response_ident)
                                     .await?
-                                    .map(|v| types::#error_enum_ident::#variant_name(v))
+                                    .map(|v| v)
                             ))
                         }
                     } else {
                         // Fallback if this status code isn't in the variants map
                         quote! {
-                            let bytes = #response_ident.bytes().await.unwrap_or_default();
-                            let value = ::serde_json::from_slice(&bytes).unwrap_or(::serde_json::Value::Null);
                             Err(Error::ErrorResponse(
-                                ResponseValue::new(
-                                    types::#error_enum_ident::UnknownValue(value),
-                                    #response_ident.status(),
-                                    #response_ident.headers().clone()
-                                )
+                                ResponseValue::from_response::<_>(#response_ident).await?
                             ))
                         }
                     }
