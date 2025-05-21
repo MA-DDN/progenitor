@@ -2519,7 +2519,8 @@ impl Generator {
     /// Generate an error enum for an operation
     ///
     /// This creates an enum named `{OperationName}Error` with variants for each error status code
-    /// plus an UnknownValue variant that holds a serde_json::Value
+    /// plus an UnknownValue variant that holds a serde_json::Value.
+    /// **Always generates the error enum, even if there are no explicit error responses.**
     pub(crate) fn generate_operation_error_enum(
         &mut self,
         method: &OperationMethod,
@@ -2532,39 +2533,28 @@ impl Generator {
             )
         });
 
-        // If there are no error responses, don't generate an enum
-        if error_responses.is_empty() {
-            return Ok(None);
-        }
-
-        // Create the enum name: {OperationName}Error
+        // Always generate the enum, even if there are no error responses
         let enum_name = format!("{}Error", method.operation_id.to_pascal_case());
         let enum_ident = format_ident!("{}", enum_name);
 
-        // Generate a variant for each error status code
         let mut variants_tokens = Vec::new();
-
-        // Track status codes we've already processed to avoid duplicates
         let mut processed_status_codes = BTreeSet::new();
 
         for response in &error_responses {
             let variant_name = match &response.status_code {
                 OperationResponseStatus::Code(code) => {
-                    // Skip if we've already processed this status code
                     if !processed_status_codes.insert(*code) {
                         continue;
                     }
                     format_ident!("Status{}", code)
                 }
                 OperationResponseStatus::Range(range) => {
-                    // Skip if we've already processed this range
-                    if !processed_status_codes.insert(*range + 1000) { // Add 1000 to avoid collision with actual status codes
+                    if !processed_status_codes.insert(*range + 1000) {
                         continue;
                     }
                     format_ident!("Status{}xx", range)
                 }
                 OperationResponseStatus::Default => {
-                    // Skip if we've already processed the default
                     if !processed_status_codes.insert(0) {
                         continue;
                     }
@@ -2604,7 +2594,7 @@ impl Generator {
             });
         }
 
-        // Add the UnknownValue variant
+        // Always add the UnknownValue variant
         variants_tokens.push(quote! {
             /// Represents an unexpected or unknown error response
             UnknownValue(::serde_json::Value)
@@ -2612,7 +2602,6 @@ impl Generator {
 
         let enum_doc = format!("Error enum for the `{}` operation", method.operation_id);
 
-        // Place the enum in the types module
         let enum_def = quote! {
             #[doc = #enum_doc]
             #[derive(Debug, Clone, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
