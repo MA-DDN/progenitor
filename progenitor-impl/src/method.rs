@@ -2540,11 +2540,9 @@ impl Generator {
         Ok(Some(enum_def))
     }
 
-    /// Generate an error enum for an operation
+    /// Generate an error enum for an operation.
     ///
-    /// This creates an enum named `{OperationName}Error` with variants for each error status code
-    /// plus an UnknownValue variant that holds a serde_json::Value.
-    /// **Always generates the error enum, even if there are no explicit error responses.**
+    /// If there are no error codes specified, return None (use `()` as the error type).
     pub(crate) fn generate_operation_error_enum(
         &mut self,
         method: &OperationMethod,
@@ -2557,12 +2555,16 @@ impl Generator {
             )
         });
 
-        // Always generate the enum, even if there are no error responses
+        if error_responses.is_empty() {
+            // No error codes: use unit type for error
+            return Ok(None);
+        }
+
         let enum_name = format!("{}Error", method.operation_id.to_pascal_case());
         let enum_ident = format_ident!("{}", enum_name);
 
         let mut variants_tokens = Vec::new();
-        let mut processed_status_codes = BTreeSet::new();
+        let mut processed_status_codes = std::collections::BTreeSet::new();
 
         for response in &error_responses {
             let variant_name = match &response.status_code {
@@ -2617,12 +2619,6 @@ impl Generator {
                 #variant_name(#type_tokens)
             });
         }
-
-        // Always add the UnknownValue variant
-        variants_tokens.push(quote! {
-            /// Represents an unexpected or unknown error response
-            UnknownValue(::serde_json::Value)
-        });
 
         let enum_doc = format!("Error enum for the `{}` operation", method.operation_id);
 
