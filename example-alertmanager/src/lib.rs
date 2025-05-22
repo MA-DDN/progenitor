@@ -2887,8 +2887,8 @@ pub mod types {
                     )
                 })?;
             match status_code {
-                400u16 => Ok(Self::Status400(value)),
-                500u16 => Ok(Self::Status500(value)),
+                400u16 => Ok(Self::Status400(value.to_string())),
+                500u16 => Ok(Self::Status500(value.to_string())),
                 _ => {
                     match serde_json::from_str(value) {
                         Ok(json_value) => Ok(Self::UnknownValue(json_value)),
@@ -2937,8 +2937,8 @@ pub mod types {
                     )
                 })?;
             match status_code {
-                400u16 => Ok(Self::Status400(value)),
-                404u16 => Ok(Self::Status404(value)),
+                400u16 => Ok(Self::Status400(value.to_string())),
+                404u16 => Ok(Self::Status404(value.to_string())),
                 _ => {
                     match serde_json::from_str(value) {
                         Ok(json_value) => Ok(Self::UnknownValue(json_value)),
@@ -2987,8 +2987,8 @@ pub mod types {
                     )
                 })?;
             match status_code {
-                404u16 => Ok(Self::Status404(value)),
-                500u16 => Ok(Self::Status500(value)),
+                404u16 => Ok(Self::Status404(value.to_string())),
+                500u16 => Ok(Self::Status500(value.to_string())),
                 _ => {
                     match serde_json::from_str(value) {
                         Ok(json_value) => Ok(Self::UnknownValue(json_value)),
@@ -3037,8 +3037,8 @@ pub mod types {
                     )
                 })?;
             match status_code {
-                404u16 => Ok(Self::Status404(value)),
-                500u16 => Ok(Self::Status500(value)),
+                404u16 => Ok(Self::Status404(value.to_string())),
+                500u16 => Ok(Self::Status500(value.to_string())),
                 _ => {
                     match serde_json::from_str(value) {
                         Ok(json_value) => Ok(Self::UnknownValue(json_value)),
@@ -3087,8 +3087,8 @@ pub mod types {
                     )
                 })?;
             match status_code {
-                400u16 => Ok(Self::Status400(value)),
-                500u16 => Ok(Self::Status500(value)),
+                400u16 => Ok(Self::Status400(value.to_string())),
+                500u16 => Ok(Self::Status500(value.to_string())),
                 _ => {
                     match serde_json::from_str(value) {
                         Ok(json_value) => Ok(Self::UnknownValue(json_value)),
@@ -3137,8 +3137,8 @@ pub mod types {
                     )
                 })?;
             match status_code {
-                400u16 => Ok(Self::Status400(value)),
-                500u16 => Ok(Self::Status500(value)),
+                400u16 => Ok(Self::Status400(value.to_string())),
+                500u16 => Ok(Self::Status500(value.to_string())),
                 _ => {
                     match serde_json::from_str(value) {
                         Ok(json_value) => Ok(Self::UnknownValue(json_value)),
@@ -3187,8 +3187,8 @@ pub mod types {
                     )
                 })?;
             match status_code {
-                400u16 => Ok(Self::Status400(value)),
-                500u16 => Ok(Self::Status500(value)),
+                400u16 => Ok(Self::Status400(value.to_string())),
+                500u16 => Ok(Self::Status500(value.to_string())),
                 _ => {
                     match serde_json::from_str(value) {
                         Ok(json_value) => Ok(Self::UnknownValue(json_value)),
@@ -3394,37 +3394,26 @@ Arguments:
             400u16 => {
                 Err(
                     Error::ErrorResponse(
-                        ResponseValue::from_response::<::std::string::String>(response)
+                        ResponseValue::<
+                            types::GetSilencesError,
+                        >::from_response::<types::GetSilencesError>(response)
                             .await?
-                            .map(|v| types::GetSilencesError::Status400(v)),
+                            .map(|v| types::GetSilencesError::Status400(v))?,
                     ),
                 )
             }
             500u16 => {
                 Err(
                     Error::ErrorResponse(
-                        ResponseValue::from_response::<::std::string::String>(response)
+                        ResponseValue::<
+                            types::GetSilencesError,
+                        >::from_response::<types::GetSilencesError>(response)
                             .await?
-                            .map(|v| types::GetSilencesError::Status500(v)),
+                            .map(|v| types::GetSilencesError::Status500(v))?,
                     ),
                 )
             }
-            _ => {
-                let status = response.status().as_u16();
-                match response.json::<serde_json::Value>().await {
-                    Ok(json_value) => {
-                        Err(
-                            Error::ErrorResponse(
-                                ResponseValue::new(
-                                    response,
-                                    types::GetSilencesError::UnknownValue(json_value),
-                                ),
-                            ),
-                        )
-                    }
-                    Err(_) => Err(Error::ErrorResponse(ResponseValue::empty(response))),
-                }
-            }
+            _ => Err(Error::UnexpectedResponse(response)),
         }
     }
     /**Post a new silence or update an existing one
@@ -3469,37 +3458,26 @@ Sends a `POST` request to `/silences`
             400u16 => {
                 Err(
                     Error::ErrorResponse(
-                        ResponseValue::from_response::<::std::string::String>(response)
+                        ResponseValue::<
+                            types::PostSilencesError,
+                        >::from_response::<types::PostSilencesError>(response)
                             .await?
-                            .map(|v| types::PostSilencesError::Status400(v)),
+                            .map(|v| types::PostSilencesError::Status400(v))?,
                     ),
                 )
             }
             404u16 => {
                 Err(
                     Error::ErrorResponse(
-                        ResponseValue::from_response::<::std::string::String>(response)
+                        ResponseValue::<
+                            types::PostSilencesError,
+                        >::from_response::<types::PostSilencesError>(response)
                             .await?
-                            .map(|v| types::PostSilencesError::Status404(v)),
+                            .map(|v| types::PostSilencesError::Status404(v))?,
                     ),
                 )
             }
-            _ => {
-                let status = response.status().as_u16();
-                match response.json::<serde_json::Value>().await {
-                    Ok(json_value) => {
-                        Err(
-                            Error::ErrorResponse(
-                                ResponseValue::new(
-                                    response,
-                                    types::PostSilencesError::UnknownValue(json_value),
-                                ),
-                            ),
-                        )
-                    }
-                    Err(_) => Err(Error::ErrorResponse(ResponseValue::empty(response))),
-                }
-            }
+            _ => Err(Error::UnexpectedResponse(response)),
         }
     }
     /**Get a silence by its ID
@@ -3558,28 +3536,15 @@ Arguments:
             500u16 => {
                 Err(
                     Error::ErrorResponse(
-                        ResponseValue::from_response::<::std::string::String>(response)
+                        ResponseValue::<
+                            types::GetSilenceError,
+                        >::from_response::<types::GetSilenceError>(response)
                             .await?
-                            .map(|v| types::GetSilenceError::Status500(v)),
+                            .map(|v| types::GetSilenceError::Status500(v))?,
                     ),
                 )
             }
-            _ => {
-                let status = response.status().as_u16();
-                match response.json::<serde_json::Value>().await {
-                    Ok(json_value) => {
-                        Err(
-                            Error::ErrorResponse(
-                                ResponseValue::new(
-                                    response,
-                                    types::GetSilenceError::UnknownValue(json_value),
-                                ),
-                            ),
-                        )
-                    }
-                    Err(_) => Err(Error::ErrorResponse(ResponseValue::empty(response))),
-                }
-            }
+            _ => Err(Error::UnexpectedResponse(response)),
         }
     }
     /**Delete a silence by its ID
@@ -3631,28 +3596,15 @@ Arguments:
             500u16 => {
                 Err(
                     Error::ErrorResponse(
-                        ResponseValue::from_response::<::std::string::String>(response)
+                        ResponseValue::<
+                            types::DeleteSilenceError,
+                        >::from_response::<types::DeleteSilenceError>(response)
                             .await?
-                            .map(|v| types::DeleteSilenceError::Status500(v)),
+                            .map(|v| types::DeleteSilenceError::Status500(v))?,
                     ),
                 )
             }
-            _ => {
-                let status = response.status().as_u16();
-                match response.json::<serde_json::Value>().await {
-                    Ok(json_value) => {
-                        Err(
-                            Error::ErrorResponse(
-                                ResponseValue::new(
-                                    response,
-                                    types::DeleteSilenceError::UnknownValue(json_value),
-                                ),
-                            ),
-                        )
-                    }
-                    Err(_) => Err(Error::ErrorResponse(ResponseValue::empty(response))),
-                }
-            }
+            _ => Err(Error::UnexpectedResponse(response)),
         }
     }
     /**Get a list of alerts
@@ -3717,37 +3669,26 @@ Arguments:
             400u16 => {
                 Err(
                     Error::ErrorResponse(
-                        ResponseValue::from_response::<::std::string::String>(response)
+                        ResponseValue::<
+                            types::GetAlertsError,
+                        >::from_response::<types::GetAlertsError>(response)
                             .await?
-                            .map(|v| types::GetAlertsError::Status400(v)),
+                            .map(|v| types::GetAlertsError::Status400(v))?,
                     ),
                 )
             }
             500u16 => {
                 Err(
                     Error::ErrorResponse(
-                        ResponseValue::from_response::<::std::string::String>(response)
+                        ResponseValue::<
+                            types::GetAlertsError,
+                        >::from_response::<types::GetAlertsError>(response)
                             .await?
-                            .map(|v| types::GetAlertsError::Status500(v)),
+                            .map(|v| types::GetAlertsError::Status500(v))?,
                     ),
                 )
             }
-            _ => {
-                let status = response.status().as_u16();
-                match response.json::<serde_json::Value>().await {
-                    Ok(json_value) => {
-                        Err(
-                            Error::ErrorResponse(
-                                ResponseValue::new(
-                                    response,
-                                    types::GetAlertsError::UnknownValue(json_value),
-                                ),
-                            ),
-                        )
-                    }
-                    Err(_) => Err(Error::ErrorResponse(ResponseValue::empty(response))),
-                }
-            }
+            _ => Err(Error::UnexpectedResponse(response)),
         }
     }
     /**Create new Alerts
@@ -3789,37 +3730,26 @@ Sends a `POST` request to `/alerts`
             400u16 => {
                 Err(
                     Error::ErrorResponse(
-                        ResponseValue::from_response::<::std::string::String>(response)
+                        ResponseValue::<
+                            types::PostAlertsError,
+                        >::from_response::<types::PostAlertsError>(response)
                             .await?
-                            .map(|v| types::PostAlertsError::Status400(v)),
+                            .map(|v| types::PostAlertsError::Status400(v))?,
                     ),
                 )
             }
             500u16 => {
                 Err(
                     Error::ErrorResponse(
-                        ResponseValue::from_response::<::std::string::String>(response)
+                        ResponseValue::<
+                            types::PostAlertsError,
+                        >::from_response::<types::PostAlertsError>(response)
                             .await?
-                            .map(|v| types::PostAlertsError::Status500(v)),
+                            .map(|v| types::PostAlertsError::Status500(v))?,
                     ),
                 )
             }
-            _ => {
-                let status = response.status().as_u16();
-                match response.json::<serde_json::Value>().await {
-                    Ok(json_value) => {
-                        Err(
-                            Error::ErrorResponse(
-                                ResponseValue::new(
-                                    response,
-                                    types::PostAlertsError::UnknownValue(json_value),
-                                ),
-                            ),
-                        )
-                    }
-                    Err(_) => Err(Error::ErrorResponse(ResponseValue::empty(response))),
-                }
-            }
+            _ => Err(Error::UnexpectedResponse(response)),
         }
     }
     /**Get a list of alert groups
@@ -3881,37 +3811,26 @@ Arguments:
             400u16 => {
                 Err(
                     Error::ErrorResponse(
-                        ResponseValue::from_response::<::std::string::String>(response)
+                        ResponseValue::<
+                            types::GetAlertGroupsError,
+                        >::from_response::<types::GetAlertGroupsError>(response)
                             .await?
-                            .map(|v| types::GetAlertGroupsError::Status400(v)),
+                            .map(|v| types::GetAlertGroupsError::Status400(v))?,
                     ),
                 )
             }
             500u16 => {
                 Err(
                     Error::ErrorResponse(
-                        ResponseValue::from_response::<::std::string::String>(response)
+                        ResponseValue::<
+                            types::GetAlertGroupsError,
+                        >::from_response::<types::GetAlertGroupsError>(response)
                             .await?
-                            .map(|v| types::GetAlertGroupsError::Status500(v)),
+                            .map(|v| types::GetAlertGroupsError::Status500(v))?,
                     ),
                 )
             }
-            _ => {
-                let status = response.status().as_u16();
-                match response.json::<serde_json::Value>().await {
-                    Ok(json_value) => {
-                        Err(
-                            Error::ErrorResponse(
-                                ResponseValue::new(
-                                    response,
-                                    types::GetAlertGroupsError::UnknownValue(json_value),
-                                ),
-                            ),
-                        )
-                    }
-                    Err(_) => Err(Error::ErrorResponse(ResponseValue::empty(response))),
-                }
-            }
+            _ => Err(Error::UnexpectedResponse(response)),
         }
     }
 }

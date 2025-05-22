@@ -1076,14 +1076,12 @@ impl Generator {
             };
             match &response.typ {
                 OperationResponseKind::Type(type_id) => {
-                    let type_name = self.type_space.get_type(type_id).unwrap();
-                    let type_ident = type_name.ident();
                     quote! {
                         #pat => {
                             Err(Error::ErrorResponse(
-                                ResponseValue::from_response::<#type_ident>(#response_ident)
+                                ResponseValue::<types::#error_enum_ident>::from_response::<types::#error_enum_ident>(#response_ident)
                                     .await?
-                                    .map(|v| types::#error_enum_ident::#variant_name(v))
+                                    .map(|v| types::#error_enum_ident::#variant_name(v))?
                             ))
                         }
                     }
@@ -1134,14 +1132,8 @@ impl Generator {
                 true => quote! {},
                 false => quote! {
                     _ => {
-                        // Try to parse the response as JSON for unknown status codes
-                        let status = #response_ident.status().as_u16();
-                        match #response_ident.json::<serde_json::Value>().await {
-                            Ok(json_value) => Err(Error::ErrorResponse(
-                                ResponseValue::new(#response_ident, types::#error_enum_ident::UnknownValue(json_value))
-                            )),
-                            Err(_) => Err(Error::ErrorResponse(ResponseValue::empty(#response_ident))),
-                        }
+                        Err(Error::UnexpectedResponse(#response_ident))
+
                     },
                 },
             };
@@ -2445,7 +2437,7 @@ impl Generator {
             if let Some(code) = status_code {
                 let variant_name = format_ident!("Status{}", code);
                 Some(quote! {
-                    #code => Ok(Self::#variant_name(value)),
+                    #code => Ok(Self::#variant_name(value.to_string())),
                 })
             } else {
                 None
@@ -2582,7 +2574,7 @@ impl Generator {
             if let Some(code) = status_code {
                 let variant_name = format_ident!("Status{}", code);
                 Some(quote! {
-                    #code => Ok(Self::#variant_name(value)),
+                    #code => Ok(Self::#variant_name(value.to_string())),
                 })
             } else {
                 None
