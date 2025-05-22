@@ -2869,21 +2869,21 @@ pub mod types {
         UnknownValue(serde_json::Value),
     }
     impl std::str::FromStr for GetSilencesError {
-        type Err = std::num::ParseIntError;
+        type Err = std::string::String;
         fn from_str(s: &str) -> Result<Self, Self::Err> {
             let (status_code, value) = s
                 .split_once(':')
-                .ok_or_else(|_| { Err(std::num::ParseIntError) })?;
-            let status_code: u16 = status_code
-                .parse()
-                .map_err(|_| { Err(std::num::ParseIntError) })?;
+                .ok_or_else(|| {
+                    Err("Unable to split status code and value".to_string())
+                })?;
+            let status_code: u16 = status_code.parse().map_err(|e| Err(e.to_string()))?;
             match status_code {
                 400u16 => Ok(Self::Status400(value.to_string())),
                 500u16 => Ok(Self::Status500(value.to_string())),
                 _ => {
                     match serde_json::from_str(value) {
                         Ok(json_value) => Ok(Self::UnknownValue(json_value)),
-                        Err(_) => Err(std::num::ParseIntError),
+                        Err(_) => Err("Unable to parse as JSON".to_string()),
                     }
                 }
             }
@@ -2900,21 +2900,21 @@ pub mod types {
         UnknownValue(serde_json::Value),
     }
     impl std::str::FromStr for PostSilencesError {
-        type Err = std::num::ParseIntError;
+        type Err = std::string::String;
         fn from_str(s: &str) -> Result<Self, Self::Err> {
             let (status_code, value) = s
                 .split_once(':')
-                .ok_or_else(|_| { Err(std::num::ParseIntError) })?;
-            let status_code: u16 = status_code
-                .parse()
-                .map_err(|_| { Err(std::num::ParseIntError) })?;
+                .ok_or_else(|| {
+                    Err("Unable to split status code and value".to_string())
+                })?;
+            let status_code: u16 = status_code.parse().map_err(|e| Err(e.to_string()))?;
             match status_code {
                 400u16 => Ok(Self::Status400(value.to_string())),
                 404u16 => Ok(Self::Status404(value.to_string())),
                 _ => {
                     match serde_json::from_str(value) {
                         Ok(json_value) => Ok(Self::UnknownValue(json_value)),
-                        Err(_) => Err(std::num::ParseIntError),
+                        Err(_) => Err("Unable to parse as JSON".to_string()),
                     }
                 }
             }
@@ -2931,21 +2931,21 @@ pub mod types {
         UnknownValue(serde_json::Value),
     }
     impl std::str::FromStr for GetSilenceError {
-        type Err = std::num::ParseIntError;
+        type Err = std::string::String;
         fn from_str(s: &str) -> Result<Self, Self::Err> {
             let (status_code, value) = s
                 .split_once(':')
-                .ok_or_else(|_| { Err(std::num::ParseIntError) })?;
-            let status_code: u16 = status_code
-                .parse()
-                .map_err(|_| { Err(std::num::ParseIntError) })?;
+                .ok_or_else(|| {
+                    Err("Unable to split status code and value".to_string())
+                })?;
+            let status_code: u16 = status_code.parse().map_err(|e| Err(e.to_string()))?;
             match status_code {
                 404u16 => Ok(Self::Status404(value.to_string())),
                 500u16 => Ok(Self::Status500(value.to_string())),
                 _ => {
                     match serde_json::from_str(value) {
                         Ok(json_value) => Ok(Self::UnknownValue(json_value)),
-                        Err(_) => Err(std::num::ParseIntError),
+                        Err(_) => Err("Unable to parse as JSON".to_string()),
                     }
                 }
             }
@@ -2962,21 +2962,21 @@ pub mod types {
         UnknownValue(serde_json::Value),
     }
     impl std::str::FromStr for DeleteSilenceError {
-        type Err = std::num::ParseIntError;
+        type Err = std::string::String;
         fn from_str(s: &str) -> Result<Self, Self::Err> {
             let (status_code, value) = s
                 .split_once(':')
-                .ok_or_else(|_| { Err(std::num::ParseIntError) })?;
-            let status_code: u16 = status_code
-                .parse()
-                .map_err(|_| { Err(std::num::ParseIntError) })?;
+                .ok_or_else(|| {
+                    Err("Unable to split status code and value".to_string())
+                })?;
+            let status_code: u16 = status_code.parse().map_err(|e| Err(e.to_string()))?;
             match status_code {
                 404u16 => Ok(Self::Status404(value.to_string())),
                 500u16 => Ok(Self::Status500(value.to_string())),
                 _ => {
                     match serde_json::from_str(value) {
                         Ok(json_value) => Ok(Self::UnknownValue(json_value)),
-                        Err(_) => Err(std::num::ParseIntError),
+                        Err(_) => Err("Unable to parse as JSON".to_string()),
                     }
                 }
             }
@@ -2993,21 +2993,21 @@ pub mod types {
         UnknownValue(serde_json::Value),
     }
     impl std::str::FromStr for GetAlertsError {
-        type Err = std::num::ParseIntError;
+        type Err = std::string::String;
         fn from_str(s: &str) -> Result<Self, Self::Err> {
             let (status_code, value) = s
                 .split_once(':')
-                .ok_or_else(|_| { Err(std::num::ParseIntError) })?;
-            let status_code: u16 = status_code
-                .parse()
-                .map_err(|_| { Err(std::num::ParseIntError) })?;
+                .ok_or_else(|| {
+                    Err("Unable to split status code and value".to_string())
+                })?;
+            let status_code: u16 = status_code.parse().map_err(|e| Err(e.to_string()))?;
             match status_code {
                 400u16 => Ok(Self::Status400(value.to_string())),
                 500u16 => Ok(Self::Status500(value.to_string())),
                 _ => {
                     match serde_json::from_str(value) {
                         Ok(json_value) => Ok(Self::UnknownValue(json_value)),
-                        Err(_) => Err(std::num::ParseIntError),
+                        Err(_) => Err("Unable to parse as JSON".to_string()),
                     }
                 }
             }
@@ -3024,21 +3024,21 @@ pub mod types {
         UnknownValue(serde_json::Value),
     }
     impl std::str::FromStr for PostAlertsError {
-        type Err = std::num::ParseIntError;
+        type Err = std::string::String;
         fn from_str(s: &str) -> Result<Self, Self::Err> {
             let (status_code, value) = s
                 .split_once(':')
-                .ok_or_else(|_| { Err(std::num::ParseIntError) })?;
-            let status_code: u16 = status_code
-                .parse()
-                .map_err(|_| { Err(std::num::ParseIntError) })?;
+                .ok_or_else(|| {
+                    Err("Unable to split status code and value".to_string())
+                })?;
+            let status_code: u16 = status_code.parse().map_err(|e| Err(e.to_string()))?;
             match status_code {
                 400u16 => Ok(Self::Status400(value.to_string())),
                 500u16 => Ok(Self::Status500(value.to_string())),
                 _ => {
                     match serde_json::from_str(value) {
                         Ok(json_value) => Ok(Self::UnknownValue(json_value)),
-                        Err(_) => Err(std::num::ParseIntError),
+                        Err(_) => Err("Unable to parse as JSON".to_string()),
                     }
                 }
             }
@@ -3055,21 +3055,21 @@ pub mod types {
         UnknownValue(serde_json::Value),
     }
     impl std::str::FromStr for GetAlertGroupsError {
-        type Err = std::num::ParseIntError;
+        type Err = std::string::String;
         fn from_str(s: &str) -> Result<Self, Self::Err> {
             let (status_code, value) = s
                 .split_once(':')
-                .ok_or_else(|_| { Err(std::num::ParseIntError) })?;
-            let status_code: u16 = status_code
-                .parse()
-                .map_err(|_| { Err(std::num::ParseIntError) })?;
+                .ok_or_else(|| {
+                    Err("Unable to split status code and value".to_string())
+                })?;
+            let status_code: u16 = status_code.parse().map_err(|e| Err(e.to_string()))?;
             match status_code {
                 400u16 => Ok(Self::Status400(value.to_string())),
                 500u16 => Ok(Self::Status500(value.to_string())),
                 _ => {
                     match serde_json::from_str(value) {
                         Ok(json_value) => Ok(Self::UnknownValue(json_value)),
-                        Err(_) => Err(std::num::ParseIntError),
+                        Err(_) => Err("Unable to parse as JSON".to_string()),
                     }
                 }
             }
@@ -3264,14 +3264,7 @@ Arguments:
                         ResponseValue::<
                             types::GetSilencesError,
                         >::from_response::<types::GetSilencesError>(response)
-                            .await?
-                            .map::<
-                                types::GetSilencesError,
-                                _,
-                                types::GetSilencesError,
-                            >(|v| types::GetSilencesError::Status400(
-                                std::string::String::new(),
-                            ))?,
+                            .await?,
                     ),
                 )
             }
@@ -3281,14 +3274,7 @@ Arguments:
                         ResponseValue::<
                             types::GetSilencesError,
                         >::from_response::<types::GetSilencesError>(response)
-                            .await?
-                            .map::<
-                                types::GetSilencesError,
-                                _,
-                                types::GetSilencesError,
-                            >(|v| types::GetSilencesError::Status500(
-                                std::string::String::new(),
-                            ))?,
+                            .await?,
                     ),
                 )
             }
@@ -3340,14 +3326,7 @@ Sends a `POST` request to `/silences`
                         ResponseValue::<
                             types::PostSilencesError,
                         >::from_response::<types::PostSilencesError>(response)
-                            .await?
-                            .map::<
-                                types::PostSilencesError,
-                                _,
-                                types::PostSilencesError,
-                            >(|v| types::PostSilencesError::Status400(
-                                std::string::String::new(),
-                            ))?,
+                            .await?,
                     ),
                 )
             }
@@ -3357,14 +3336,7 @@ Sends a `POST` request to `/silences`
                         ResponseValue::<
                             types::PostSilencesError,
                         >::from_response::<types::PostSilencesError>(response)
-                            .await?
-                            .map::<
-                                types::PostSilencesError,
-                                _,
-                                types::PostSilencesError,
-                            >(|v| types::PostSilencesError::Status404(
-                                std::string::String::new(),
-                            ))?,
+                            .await?,
                     ),
                 )
             }
@@ -3419,10 +3391,10 @@ Arguments:
             404u16 => {
                 Err(
                     Error::ErrorResponse(
-                        ResponseValue::empty(response)
-                            .map::<
-                                types::GetSilenceError,
-                            >(|_| types::GetSilenceError::Status404(()))?,
+                        ResponseValue::<
+                            types::GetSilenceError,
+                        >::from_response::<types::GetSilenceError>(response)
+                            .await?,
                     ),
                 )
             }
@@ -3432,14 +3404,7 @@ Arguments:
                         ResponseValue::<
                             types::GetSilenceError,
                         >::from_response::<types::GetSilenceError>(response)
-                            .await?
-                            .map::<
-                                types::GetSilenceError,
-                                _,
-                                types::GetSilenceError,
-                            >(|v| types::GetSilenceError::Status500(
-                                std::string::String::new(),
-                            ))?,
+                            .await?,
                     ),
                 )
             }
@@ -3487,10 +3452,10 @@ Arguments:
             404u16 => {
                 Err(
                     Error::ErrorResponse(
-                        ResponseValue::empty(response)
-                            .map::<
-                                types::DeleteSilenceError,
-                            >(|_| types::DeleteSilenceError::Status404(()))?,
+                        ResponseValue::<
+                            types::DeleteSilenceError,
+                        >::from_response::<types::DeleteSilenceError>(response)
+                            .await?,
                     ),
                 )
             }
@@ -3500,14 +3465,7 @@ Arguments:
                         ResponseValue::<
                             types::DeleteSilenceError,
                         >::from_response::<types::DeleteSilenceError>(response)
-                            .await?
-                            .map::<
-                                types::DeleteSilenceError,
-                                _,
-                                types::DeleteSilenceError,
-                            >(|v| types::DeleteSilenceError::Status500(
-                                std::string::String::new(),
-                            ))?,
+                            .await?,
                     ),
                 )
             }
@@ -3579,14 +3537,7 @@ Arguments:
                         ResponseValue::<
                             types::GetAlertsError,
                         >::from_response::<types::GetAlertsError>(response)
-                            .await?
-                            .map::<
-                                types::GetAlertsError,
-                                _,
-                                types::GetAlertsError,
-                            >(|v| types::GetAlertsError::Status400(
-                                std::string::String::new(),
-                            ))?,
+                            .await?,
                     ),
                 )
             }
@@ -3596,14 +3547,7 @@ Arguments:
                         ResponseValue::<
                             types::GetAlertsError,
                         >::from_response::<types::GetAlertsError>(response)
-                            .await?
-                            .map::<
-                                types::GetAlertsError,
-                                _,
-                                types::GetAlertsError,
-                            >(|v| types::GetAlertsError::Status500(
-                                std::string::String::new(),
-                            ))?,
+                            .await?,
                     ),
                 )
             }
@@ -3652,14 +3596,7 @@ Sends a `POST` request to `/alerts`
                         ResponseValue::<
                             types::PostAlertsError,
                         >::from_response::<types::PostAlertsError>(response)
-                            .await?
-                            .map::<
-                                types::PostAlertsError,
-                                _,
-                                types::PostAlertsError,
-                            >(|v| types::PostAlertsError::Status400(
-                                std::string::String::new(),
-                            ))?,
+                            .await?,
                     ),
                 )
             }
@@ -3669,14 +3606,7 @@ Sends a `POST` request to `/alerts`
                         ResponseValue::<
                             types::PostAlertsError,
                         >::from_response::<types::PostAlertsError>(response)
-                            .await?
-                            .map::<
-                                types::PostAlertsError,
-                                _,
-                                types::PostAlertsError,
-                            >(|v| types::PostAlertsError::Status500(
-                                std::string::String::new(),
-                            ))?,
+                            .await?,
                     ),
                 )
             }
@@ -3745,14 +3675,7 @@ Arguments:
                         ResponseValue::<
                             types::GetAlertGroupsError,
                         >::from_response::<types::GetAlertGroupsError>(response)
-                            .await?
-                            .map::<
-                                types::GetAlertGroupsError,
-                                _,
-                                types::GetAlertGroupsError,
-                            >(|v| types::GetAlertGroupsError::Status400(
-                                std::string::String::new(),
-                            ))?,
+                            .await?,
                     ),
                 )
             }
@@ -3762,14 +3685,7 @@ Arguments:
                         ResponseValue::<
                             types::GetAlertGroupsError,
                         >::from_response::<types::GetAlertGroupsError>(response)
-                            .await?
-                            .map::<
-                                types::GetAlertGroupsError,
-                                _,
-                                types::GetAlertGroupsError,
-                            >(|v| types::GetAlertGroupsError::Status500(
-                                std::string::String::new(),
-                            ))?,
+                            .await?,
                     ),
                 )
             }

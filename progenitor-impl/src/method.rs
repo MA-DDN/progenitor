@@ -970,7 +970,7 @@ impl Generator {
                     unreachable!("invalid body kind/type combination")
                 }
                 _ => None,
-        });
+            });
         // ... and there can be at most one body.
         assert!(body_func.clone().count() <= 1);
 
@@ -1081,7 +1081,6 @@ impl Generator {
                             Err(Error::ErrorResponse(
                                 ResponseValue::<types::#error_enum_ident>::from_response::<types::#error_enum_ident>(#response_ident)
                                     .await?
-                                    .map::<types::#error_enum_ident, _, types::#error_enum_ident>(|v| types::#error_enum_ident::#variant_name(std::string::String::new()))?
                             ))
                         }
                     }
@@ -1089,8 +1088,8 @@ impl Generator {
                 OperationResponseKind::None => quote! {
                     #pat => {
                         Err(Error::ErrorResponse(
-                            ResponseValue::empty(#response_ident)
-                                .map::<types::#error_enum_ident, _, types::#error_enum_ident>(|_| types::#error_enum_ident::#variant_name(()))?
+                                ResponseValue::<types::#error_enum_ident>::from_response::<types::#error_enum_ident>(#response_ident)
+                                    .await?
                         ))
                     }
                 },
@@ -2428,21 +2427,24 @@ impl Generator {
         let enum_doc = format!("Response enum for the `{}` operation", method.operation_id);
 
         // Generate FromStr implementation
-        let from_str_match_arms = success_responses.iter().filter_map(|response| {
-            let status_code = match &response.status_code {
-                OperationResponseStatus::Code(code) => Some(*code),
-                _ => None,
-            };
-            
-            if let Some(code) = status_code {
-                let variant_name = format_ident!("Status{}", code);
-                Some(quote! {
-                    #code => Ok(Self::#variant_name(value.to_string())),
-                })
-            } else {
-                None
-            }
-        }).collect::<Vec<_>>();
+        let from_str_match_arms = success_responses
+            .iter()
+            .filter_map(|response| {
+                let status_code = match &response.status_code {
+                    OperationResponseStatus::Code(code) => Some(*code),
+                    _ => None,
+                };
+
+                if let Some(code) = status_code {
+                    let variant_name = format_ident!("Status{}", code);
+                    Some(quote! {
+                        #code => Ok(Self::#variant_name(value.to_string())),
+                    })
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
 
         let enum_def = quote! {
             #[doc = #enum_doc]
@@ -2452,18 +2454,18 @@ impl Generator {
             }
 
             impl std::str::FromStr for #enum_ident {
-                type Err = std::num::ParseIntError;
+                type Err = std::string::String;
 
                 fn from_str(s: &str) -> Result<Self, Self::Err> {
-                    let (status_code, value) = s.split_once(':').ok_or_else(|_| {
-                        Err(std::num::ParseIntError)
+                    let (status_code, value) = s.split_once(':').ok_or_else(|| {
+                        Err("Unable to split status code and value".to_string())
                     })?;
-                    
-                    let status_code: u16 = status_code.parse()?
+
+                    let status_code: u16 = status_code.parse().map_err(|e| Err(e.to_string()))?;
 
                     match status_code {
                         #(#from_str_match_arms)*
-                        _ => Err(std::num::ParseIntError),
+                        _ => Err("Unknown status code".to_string()),
                     }
                 }
             }
@@ -2557,21 +2559,24 @@ impl Generator {
         let enum_doc = format!("Error enum for the `{}` operation", method.operation_id);
 
         // Generate FromStr implementation
-        let from_str_match_arms = error_responses.iter().filter_map(|response| {
-            let status_code = match &response.status_code {
-                OperationResponseStatus::Code(code) => Some(*code),
-                _ => None,
-            };
-            
-            if let Some(code) = status_code {
-                let variant_name = format_ident!("Status{}", code);
-                Some(quote! {
-                    #code => Ok(Self::#variant_name(value.to_string())),
-                })
-            } else {
-                None
-            }
-        }).collect::<Vec<_>>();
+        let from_str_match_arms = error_responses
+            .iter()
+            .filter_map(|response| {
+                let status_code = match &response.status_code {
+                    OperationResponseStatus::Code(code) => Some(*code),
+                    _ => None,
+                };
+
+                if let Some(code) = status_code {
+                    let variant_name = format_ident!("Status{}", code);
+                    Some(quote! {
+                        #code => Ok(Self::#variant_name(value.to_string())),
+                    })
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
 
         let enum_def = quote! {
             #[doc = #enum_doc]
@@ -2581,16 +2586,14 @@ impl Generator {
             }
 
             impl std::str::FromStr for #enum_ident {
-                type Err = std::num::ParseIntError;
+                type Err = std::string::String;
 
                 fn from_str(s: &str) -> Result<Self, Self::Err> {
-                    let (status_code, value) = s.split_once(':').ok_or_else(|_| {
-                        Err(std::num::ParseIntError)
+                    let (status_code, value) = s.split_once(':').ok_or_else(|| {
+                        Err("Unable to split status code and value".to_string())
                     })?;
-                    
-                    let status_code: u16 = status_code.parse().map_err(|_| {
-                        Err(std::num::ParseIntError)
-                    })?;
+
+                    let status_code: u16 = status_code.parse().map_err(|e| Err(e.to_string()))?;
 
                     match status_code {
                         #(#from_str_match_arms)*
@@ -2598,7 +2601,7 @@ impl Generator {
                             // Try to parse as JSON for unknown status codes
                             match serde_json::from_str(value) {
                                 Ok(json_value) => Ok(Self::UnknownValue(json_value)),
-                                Err(_) => Err(std::num::ParseIntError)
+                                Err(_) => Err("Unable to parse as JSON".to_string())
                             }
                         }
                     }
