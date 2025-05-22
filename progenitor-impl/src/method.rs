@@ -1092,7 +1092,7 @@ impl Generator {
                     #pat => {
                         Err(Error::ErrorResponse(
                             ResponseValue::empty(#response_ident)
-                                .map(|_| types::#error_enum_ident::#variant_name(()))
+                                .map(|_| types::#error_enum_ident::#variant_name(()))?
                         ))
                     }
                 },

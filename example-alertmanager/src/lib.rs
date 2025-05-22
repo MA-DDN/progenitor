@@ -3227,7 +3227,7 @@ Arguments:
                 Err(
                     Error::ErrorResponse(
                         ResponseValue::empty(response)
-                            .map(|_| types::GetSilenceError::Status404(())),
+                            .map(|_| types::GetSilenceError::Status404(()))?,
                     ),
                 )
             }
@@ -3285,7 +3285,7 @@ Arguments:
                 Err(
                     Error::ErrorResponse(
                         ResponseValue::empty(response)
-                            .map(|_| types::DeleteSilenceError::Status404(())),
+                            .map(|_| types::DeleteSilenceError::Status404(()))?,
                     ),
                 )
             }
