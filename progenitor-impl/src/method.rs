@@ -1133,7 +1133,16 @@ impl Generator {
             {
                 true => quote! {},
                 false => quote! {
-                    _ => Err(Error::ErrorResponse(ResponseValue::empty(#response_ident))),
+                    _ => {
+                        // Try to parse the response as JSON for unknown status codes
+                        let status = #response_ident.status().as_u16();
+                        match #response_ident.json::<serde_json::Value>().await {
+                            Ok(json_value) => Err(Error::ErrorResponse(
+                                ResponseValue::new(#response_ident, types::#error_enum_ident::UnknownValue(json_value))
+                            )),
+                            Err(_) => Err(Error::ErrorResponse(ResponseValue::empty(#response_ident))),
+                        }
+                    },
                 },
             };
 
@@ -2426,11 +2435,53 @@ impl Generator {
 
         let enum_doc = format!("Response enum for the `{}` operation", method.operation_id);
 
+        // Generate FromStr implementation
+        let from_str_match_arms = success_responses.iter().filter_map(|response| {
+            let status_code = match &response.status_code {
+                OperationResponseStatus::Code(code) => Some(*code),
+                _ => None,
+            };
+            
+            if let Some(code) = status_code {
+                let variant_name = format_ident!("Status{}", code);
+                Some(quote! {
+                    #code => Ok(Self::#variant_name(value)),
+                })
+            } else {
+                None
+            }
+        }).collect::<Vec<_>>();
+
         let enum_def = quote! {
             #[doc = #enum_doc]
             #[derive(Debug, Clone, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
             pub enum #enum_ident {
                 #(#variants_tokens),*
+            }
+
+            impl std::str::FromStr for #enum_ident {
+                type Err = crate::error::ConversionError;
+
+                fn from_str(s: &str) -> Result<Self, Self::Err> {
+                    let (status_code, value) = s.split_once(':').ok_or_else(|| {
+                        crate::error::ConversionError(
+                            "Invalid format for response enum, expected 'status_code:value'".into()
+                        )
+                    })?;
+                    
+                    let status_code: u16 = status_code.parse().map_err(|_| {
+                        crate::error::ConversionError(
+                            "Invalid status code in response enum".into()
+                        )
+                    })?;
+
+                    match status_code {
+                        #(#from_str_match_arms)*
+                        _ => Err(crate::error::ConversionError(
+                            format!("Unknown status code: {}", status_code).into()
+                        )),
+                    }
+                }
             }
         };
 
@@ -2513,13 +2564,67 @@ impl Generator {
             });
         }
 
+        // Add UnknownValue variant
+        variants_tokens.push(quote! {
+            /// Error response for an unknown status code
+            UnknownValue(serde_json::Value)
+        });
+
         let enum_doc = format!("Error enum for the `{}` operation", method.operation_id);
+
+        // Generate FromStr implementation
+        let from_str_match_arms = error_responses.iter().filter_map(|response| {
+            let status_code = match &response.status_code {
+                OperationResponseStatus::Code(code) => Some(*code),
+                _ => None,
+            };
+            
+            if let Some(code) = status_code {
+                let variant_name = format_ident!("Status{}", code);
+                Some(quote! {
+                    #code => Ok(Self::#variant_name(value)),
+                })
+            } else {
+                None
+            }
+        }).collect::<Vec<_>>();
 
         let enum_def = quote! {
             #[doc = #enum_doc]
             #[derive(Debug, Clone, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
             pub enum #enum_ident {
                 #(#variants_tokens),*
+            }
+
+            impl std::str::FromStr for #enum_ident {
+                type Err = crate::error::ConversionError;
+
+                fn from_str(s: &str) -> Result<Self, Self::Err> {
+                    let (status_code, value) = s.split_once(':').ok_or_else(|| {
+                        crate::error::ConversionError(
+                            "Invalid format for error enum, expected 'status_code:value'".into()
+                        )
+                    })?;
+                    
+                    let status_code: u16 = status_code.parse().map_err(|_| {
+                        crate::error::ConversionError(
+                            "Invalid status code in error enum".into()
+                        )
+                    })?;
+
+                    match status_code {
+                        #(#from_str_match_arms)*
+                        _ => {
+                            // Try to parse as JSON for unknown status codes
+                            match serde_json::from_str(value) {
+                                Ok(json_value) => Ok(Self::UnknownValue(json_value)),
+                                Err(_) => Err(crate::error::ConversionError(
+                                    format!("Failed to parse unknown error response for status code: {}", status_code).into()
+                                ))
+                            }
+                        }
+                    }
+                }
             }
         };
 

@@ -2865,6 +2865,48 @@ pub mod types {
         Status400(::std::string::String),
         #[doc = concat!("Error response for status code ", "500")]
         Status500(::std::string::String),
+        /// Error response for an unknown status code
+        UnknownValue(serde_json::Value),
+    }
+    impl std::str::FromStr for GetSilencesError {
+        type Err = crate::error::ConversionError;
+        fn from_str(s: &str) -> Result<Self, Self::Err> {
+            let (status_code, value) = s
+                .split_once(':')
+                .ok_or_else(|| {
+                    crate::error::ConversionError(
+                        "Invalid format for error enum, expected 'status_code:value'"
+                            .into(),
+                    )
+                })?;
+            let status_code: u16 = status_code
+                .parse()
+                .map_err(|_| {
+                    crate::error::ConversionError(
+                        "Invalid status code in error enum".into(),
+                    )
+                })?;
+            match status_code {
+                400u16 => Ok(Self::Status400(value)),
+                500u16 => Ok(Self::Status500(value)),
+                _ => {
+                    match serde_json::from_str(value) {
+                        Ok(json_value) => Ok(Self::UnknownValue(json_value)),
+                        Err(_) => {
+                            Err(
+                                crate::error::ConversionError(
+                                    format!(
+                                        "Failed to parse unknown error response for status code: {}",
+                                        status_code
+                                    )
+                                        .into(),
+                                ),
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
     ///Error enum for the `post_silences` operation
     #[derive(Debug, Clone, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
@@ -2873,6 +2915,48 @@ pub mod types {
         Status400(::std::string::String),
         #[doc = concat!("Error response for status code ", "404")]
         Status404(::std::string::String),
+        /// Error response for an unknown status code
+        UnknownValue(serde_json::Value),
+    }
+    impl std::str::FromStr for PostSilencesError {
+        type Err = crate::error::ConversionError;
+        fn from_str(s: &str) -> Result<Self, Self::Err> {
+            let (status_code, value) = s
+                .split_once(':')
+                .ok_or_else(|| {
+                    crate::error::ConversionError(
+                        "Invalid format for error enum, expected 'status_code:value'"
+                            .into(),
+                    )
+                })?;
+            let status_code: u16 = status_code
+                .parse()
+                .map_err(|_| {
+                    crate::error::ConversionError(
+                        "Invalid status code in error enum".into(),
+                    )
+                })?;
+            match status_code {
+                400u16 => Ok(Self::Status400(value)),
+                404u16 => Ok(Self::Status404(value)),
+                _ => {
+                    match serde_json::from_str(value) {
+                        Ok(json_value) => Ok(Self::UnknownValue(json_value)),
+                        Err(_) => {
+                            Err(
+                                crate::error::ConversionError(
+                                    format!(
+                                        "Failed to parse unknown error response for status code: {}",
+                                        status_code
+                                    )
+                                        .into(),
+                                ),
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
     ///Error enum for the `get_silence` operation
     #[derive(Debug, Clone, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
@@ -2881,6 +2965,48 @@ pub mod types {
         Status404(()),
         #[doc = concat!("Error response for status code ", "500")]
         Status500(::std::string::String),
+        /// Error response for an unknown status code
+        UnknownValue(serde_json::Value),
+    }
+    impl std::str::FromStr for GetSilenceError {
+        type Err = crate::error::ConversionError;
+        fn from_str(s: &str) -> Result<Self, Self::Err> {
+            let (status_code, value) = s
+                .split_once(':')
+                .ok_or_else(|| {
+                    crate::error::ConversionError(
+                        "Invalid format for error enum, expected 'status_code:value'"
+                            .into(),
+                    )
+                })?;
+            let status_code: u16 = status_code
+                .parse()
+                .map_err(|_| {
+                    crate::error::ConversionError(
+                        "Invalid status code in error enum".into(),
+                    )
+                })?;
+            match status_code {
+                404u16 => Ok(Self::Status404(value)),
+                500u16 => Ok(Self::Status500(value)),
+                _ => {
+                    match serde_json::from_str(value) {
+                        Ok(json_value) => Ok(Self::UnknownValue(json_value)),
+                        Err(_) => {
+                            Err(
+                                crate::error::ConversionError(
+                                    format!(
+                                        "Failed to parse unknown error response for status code: {}",
+                                        status_code
+                                    )
+                                        .into(),
+                                ),
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
     ///Error enum for the `delete_silence` operation
     #[derive(Debug, Clone, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
@@ -2889,6 +3015,48 @@ pub mod types {
         Status404(()),
         #[doc = concat!("Error response for status code ", "500")]
         Status500(::std::string::String),
+        /// Error response for an unknown status code
+        UnknownValue(serde_json::Value),
+    }
+    impl std::str::FromStr for DeleteSilenceError {
+        type Err = crate::error::ConversionError;
+        fn from_str(s: &str) -> Result<Self, Self::Err> {
+            let (status_code, value) = s
+                .split_once(':')
+                .ok_or_else(|| {
+                    crate::error::ConversionError(
+                        "Invalid format for error enum, expected 'status_code:value'"
+                            .into(),
+                    )
+                })?;
+            let status_code: u16 = status_code
+                .parse()
+                .map_err(|_| {
+                    crate::error::ConversionError(
+                        "Invalid status code in error enum".into(),
+                    )
+                })?;
+            match status_code {
+                404u16 => Ok(Self::Status404(value)),
+                500u16 => Ok(Self::Status500(value)),
+                _ => {
+                    match serde_json::from_str(value) {
+                        Ok(json_value) => Ok(Self::UnknownValue(json_value)),
+                        Err(_) => {
+                            Err(
+                                crate::error::ConversionError(
+                                    format!(
+                                        "Failed to parse unknown error response for status code: {}",
+                                        status_code
+                                    )
+                                        .into(),
+                                ),
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
     ///Error enum for the `get_alerts` operation
     #[derive(Debug, Clone, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
@@ -2897,6 +3065,48 @@ pub mod types {
         Status400(::std::string::String),
         #[doc = concat!("Error response for status code ", "500")]
         Status500(::std::string::String),
+        /// Error response for an unknown status code
+        UnknownValue(serde_json::Value),
+    }
+    impl std::str::FromStr for GetAlertsError {
+        type Err = crate::error::ConversionError;
+        fn from_str(s: &str) -> Result<Self, Self::Err> {
+            let (status_code, value) = s
+                .split_once(':')
+                .ok_or_else(|| {
+                    crate::error::ConversionError(
+                        "Invalid format for error enum, expected 'status_code:value'"
+                            .into(),
+                    )
+                })?;
+            let status_code: u16 = status_code
+                .parse()
+                .map_err(|_| {
+                    crate::error::ConversionError(
+                        "Invalid status code in error enum".into(),
+                    )
+                })?;
+            match status_code {
+                400u16 => Ok(Self::Status400(value)),
+                500u16 => Ok(Self::Status500(value)),
+                _ => {
+                    match serde_json::from_str(value) {
+                        Ok(json_value) => Ok(Self::UnknownValue(json_value)),
+                        Err(_) => {
+                            Err(
+                                crate::error::ConversionError(
+                                    format!(
+                                        "Failed to parse unknown error response for status code: {}",
+                                        status_code
+                                    )
+                                        .into(),
+                                ),
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
     ///Error enum for the `post_alerts` operation
     #[derive(Debug, Clone, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
@@ -2905,6 +3115,48 @@ pub mod types {
         Status400(::std::string::String),
         #[doc = concat!("Error response for status code ", "500")]
         Status500(::std::string::String),
+        /// Error response for an unknown status code
+        UnknownValue(serde_json::Value),
+    }
+    impl std::str::FromStr for PostAlertsError {
+        type Err = crate::error::ConversionError;
+        fn from_str(s: &str) -> Result<Self, Self::Err> {
+            let (status_code, value) = s
+                .split_once(':')
+                .ok_or_else(|| {
+                    crate::error::ConversionError(
+                        "Invalid format for error enum, expected 'status_code:value'"
+                            .into(),
+                    )
+                })?;
+            let status_code: u16 = status_code
+                .parse()
+                .map_err(|_| {
+                    crate::error::ConversionError(
+                        "Invalid status code in error enum".into(),
+                    )
+                })?;
+            match status_code {
+                400u16 => Ok(Self::Status400(value)),
+                500u16 => Ok(Self::Status500(value)),
+                _ => {
+                    match serde_json::from_str(value) {
+                        Ok(json_value) => Ok(Self::UnknownValue(json_value)),
+                        Err(_) => {
+                            Err(
+                                crate::error::ConversionError(
+                                    format!(
+                                        "Failed to parse unknown error response for status code: {}",
+                                        status_code
+                                    )
+                                        .into(),
+                                ),
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
     ///Error enum for the `get_alert_groups` operation
     #[derive(Debug, Clone, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
@@ -2913,6 +3165,48 @@ pub mod types {
         Status400(::std::string::String),
         #[doc = concat!("Error response for status code ", "500")]
         Status500(::std::string::String),
+        /// Error response for an unknown status code
+        UnknownValue(serde_json::Value),
+    }
+    impl std::str::FromStr for GetAlertGroupsError {
+        type Err = crate::error::ConversionError;
+        fn from_str(s: &str) -> Result<Self, Self::Err> {
+            let (status_code, value) = s
+                .split_once(':')
+                .ok_or_else(|| {
+                    crate::error::ConversionError(
+                        "Invalid format for error enum, expected 'status_code:value'"
+                            .into(),
+                    )
+                })?;
+            let status_code: u16 = status_code
+                .parse()
+                .map_err(|_| {
+                    crate::error::ConversionError(
+                        "Invalid status code in error enum".into(),
+                    )
+                })?;
+            match status_code {
+                400u16 => Ok(Self::Status400(value)),
+                500u16 => Ok(Self::Status500(value)),
+                _ => {
+                    match serde_json::from_str(value) {
+                        Ok(json_value) => Ok(Self::UnknownValue(json_value)),
+                        Err(_) => {
+                            Err(
+                                crate::error::ConversionError(
+                                    format!(
+                                        "Failed to parse unknown error response for status code: {}",
+                                        status_code
+                                    )
+                                        .into(),
+                                ),
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 #[derive(Clone, Debug)]
@@ -3115,7 +3409,22 @@ Arguments:
                     ),
                 )
             }
-            _ => Err(Error::ErrorResponse(ResponseValue::empty(response))),
+            _ => {
+                let status = response.status().as_u16();
+                match response.json::<serde_json::Value>().await {
+                    Ok(json_value) => {
+                        Err(
+                            Error::ErrorResponse(
+                                ResponseValue::new(
+                                    response,
+                                    types::GetSilencesError::UnknownValue(json_value),
+                                ),
+                            ),
+                        )
+                    }
+                    Err(_) => Err(Error::ErrorResponse(ResponseValue::empty(response))),
+                }
+            }
         }
     }
     /**Post a new silence or update an existing one
@@ -3175,7 +3484,22 @@ Sends a `POST` request to `/silences`
                     ),
                 )
             }
-            _ => Err(Error::ErrorResponse(ResponseValue::empty(response))),
+            _ => {
+                let status = response.status().as_u16();
+                match response.json::<serde_json::Value>().await {
+                    Ok(json_value) => {
+                        Err(
+                            Error::ErrorResponse(
+                                ResponseValue::new(
+                                    response,
+                                    types::PostSilencesError::UnknownValue(json_value),
+                                ),
+                            ),
+                        )
+                    }
+                    Err(_) => Err(Error::ErrorResponse(ResponseValue::empty(response))),
+                }
+            }
         }
     }
     /**Get a silence by its ID
@@ -3240,7 +3564,22 @@ Arguments:
                     ),
                 )
             }
-            _ => Err(Error::ErrorResponse(ResponseValue::empty(response))),
+            _ => {
+                let status = response.status().as_u16();
+                match response.json::<serde_json::Value>().await {
+                    Ok(json_value) => {
+                        Err(
+                            Error::ErrorResponse(
+                                ResponseValue::new(
+                                    response,
+                                    types::GetSilenceError::UnknownValue(json_value),
+                                ),
+                            ),
+                        )
+                    }
+                    Err(_) => Err(Error::ErrorResponse(ResponseValue::empty(response))),
+                }
+            }
         }
     }
     /**Delete a silence by its ID
@@ -3298,7 +3637,22 @@ Arguments:
                     ),
                 )
             }
-            _ => Err(Error::ErrorResponse(ResponseValue::empty(response))),
+            _ => {
+                let status = response.status().as_u16();
+                match response.json::<serde_json::Value>().await {
+                    Ok(json_value) => {
+                        Err(
+                            Error::ErrorResponse(
+                                ResponseValue::new(
+                                    response,
+                                    types::DeleteSilenceError::UnknownValue(json_value),
+                                ),
+                            ),
+                        )
+                    }
+                    Err(_) => Err(Error::ErrorResponse(ResponseValue::empty(response))),
+                }
+            }
         }
     }
     /**Get a list of alerts
@@ -3378,7 +3732,22 @@ Arguments:
                     ),
                 )
             }
-            _ => Err(Error::ErrorResponse(ResponseValue::empty(response))),
+            _ => {
+                let status = response.status().as_u16();
+                match response.json::<serde_json::Value>().await {
+                    Ok(json_value) => {
+                        Err(
+                            Error::ErrorResponse(
+                                ResponseValue::new(
+                                    response,
+                                    types::GetAlertsError::UnknownValue(json_value),
+                                ),
+                            ),
+                        )
+                    }
+                    Err(_) => Err(Error::ErrorResponse(ResponseValue::empty(response))),
+                }
+            }
         }
     }
     /**Create new Alerts
@@ -3435,7 +3804,22 @@ Sends a `POST` request to `/alerts`
                     ),
                 )
             }
-            _ => Err(Error::ErrorResponse(ResponseValue::empty(response))),
+            _ => {
+                let status = response.status().as_u16();
+                match response.json::<serde_json::Value>().await {
+                    Ok(json_value) => {
+                        Err(
+                            Error::ErrorResponse(
+                                ResponseValue::new(
+                                    response,
+                                    types::PostAlertsError::UnknownValue(json_value),
+                                ),
+                            ),
+                        )
+                    }
+                    Err(_) => Err(Error::ErrorResponse(ResponseValue::empty(response))),
+                }
+            }
         }
     }
     /**Get a list of alert groups
@@ -3512,7 +3896,22 @@ Arguments:
                     ),
                 )
             }
-            _ => Err(Error::ErrorResponse(ResponseValue::empty(response))),
+            _ => {
+                let status = response.status().as_u16();
+                match response.json::<serde_json::Value>().await {
+                    Ok(json_value) => {
+                        Err(
+                            Error::ErrorResponse(
+                                ResponseValue::new(
+                                    response,
+                                    types::GetAlertGroupsError::UnknownValue(json_value),
+                                ),
+                            ),
+                        )
+                    }
+                    Err(_) => Err(Error::ErrorResponse(ResponseValue::empty(response))),
+                }
+            }
         }
     }
 }
