@@ -1075,13 +1075,13 @@ impl Generator {
                 OperationResponseStatus::Default => format_ident!("Default"),
             };
             match &response.typ {
-                OperationResponseKind::Type(type_id) => {
+                OperationResponseKind::Type(_) => {
                     quote! {
                         #pat => {
                             Err(Error::ErrorResponse(
                                 ResponseValue::<types::#error_enum_ident>::from_response::<types::#error_enum_ident>(#response_ident)
                                     .await?
-                                    .map(|v| types::#error_enum_ident::#variant_name(v))?
+                                    .map::<types::#error_enum_ident, _, types::#error_enum_ident>(|v| types::#error_enum_ident::#variant_name(std::string::String::new()))?
                             ))
                         }
                     }
@@ -1090,7 +1090,7 @@ impl Generator {
                     #pat => {
                         Err(Error::ErrorResponse(
                             ResponseValue::empty(#response_ident)
-                                .map(|_| types::#error_enum_ident::#variant_name(()))?
+                                .map::<types::#error_enum_ident, _, types::#error_enum_ident>(|_| types::#error_enum_ident::#variant_name(()))?
                         ))
                     }
                 },
@@ -2452,26 +2452,18 @@ impl Generator {
             }
 
             impl std::str::FromStr for #enum_ident {
-                type Err = crate::error::ConversionError;
+                type Err = std::num::ParseIntError;
 
                 fn from_str(s: &str) -> Result<Self, Self::Err> {
-                    let (status_code, value) = s.split_once(':').ok_or_else(|| {
-                        crate::error::ConversionError(
-                            "Invalid format for response enum, expected 'status_code:value'".into()
-                        )
+                    let (status_code, value) = s.split_once(':').ok_or_else(|_| {
+                        Err(std::num::ParseIntError)
                     })?;
                     
-                    let status_code: u16 = status_code.parse().map_err(|_| {
-                        crate::error::ConversionError(
-                            "Invalid status code in response enum".into()
-                        )
-                    })?;
+                    let status_code: u16 = status_code.parse()?
 
                     match status_code {
                         #(#from_str_match_arms)*
-                        _ => Err(crate::error::ConversionError(
-                            format!("Unknown status code: {}", status_code).into()
-                        )),
+                        _ => Err(std::num::ParseIntError),
                     }
                 }
             }
@@ -2589,19 +2581,15 @@ impl Generator {
             }
 
             impl std::str::FromStr for #enum_ident {
-                type Err = crate::error::ConversionError;
+                type Err = std::num::ParseIntError;
 
                 fn from_str(s: &str) -> Result<Self, Self::Err> {
-                    let (status_code, value) = s.split_once(':').ok_or_else(|| {
-                        crate::error::ConversionError(
-                            "Invalid format for error enum, expected 'status_code:value'".into()
-                        )
+                    let (status_code, value) = s.split_once(':').ok_or_else(|_| {
+                        Err(std::num::ParseIntError)
                     })?;
                     
                     let status_code: u16 = status_code.parse().map_err(|_| {
-                        crate::error::ConversionError(
-                            "Invalid status code in error enum".into()
-                        )
+                        Err(std::num::ParseIntError)
                     })?;
 
                     match status_code {
@@ -2610,9 +2598,7 @@ impl Generator {
                             // Try to parse as JSON for unknown status codes
                             match serde_json::from_str(value) {
                                 Ok(json_value) => Ok(Self::UnknownValue(json_value)),
-                                Err(_) => Err(crate::error::ConversionError(
-                                    format!("Failed to parse unknown error response for status code: {}", status_code).into()
-                                ))
+                                Err(_) => Err(std::num::ParseIntError)
                             }
                         }
                     }
