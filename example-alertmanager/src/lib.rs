@@ -2871,12 +2871,14 @@ pub mod types {
     impl std::str::FromStr for GetSilencesError {
         type Err = std::string::String;
         fn from_str(s: &str) -> Result<Self, Self::Err> {
-            let (status_code, value) = s
-                .split_once(':')
-                .ok_or_else(|| {
-                    Err("Unable to split status code and value".to_string())
-                })?;
-            let status_code: u16 = status_code.parse().map_err(|e| Err(e.to_string()))?;
+            let (status_code, value) = match s.split_once(':') {
+                Some((status_code, value)) => (status_code, value),
+                None => return Err("Unable to split status code and value".to_string()),
+            };
+            let status_code: u16 = match status_code.parse() {
+                Ok(code) => code,
+                Err(e) => return Err(format!("Unable to parse status code: {}", e)),
+            };
             match status_code {
                 400u16 => Ok(Self::Status400(value.to_string())),
                 500u16 => Ok(Self::Status500(value.to_string())),
@@ -2902,12 +2904,14 @@ pub mod types {
     impl std::str::FromStr for PostSilencesError {
         type Err = std::string::String;
         fn from_str(s: &str) -> Result<Self, Self::Err> {
-            let (status_code, value) = s
-                .split_once(':')
-                .ok_or_else(|| {
-                    Err("Unable to split status code and value".to_string())
-                })?;
-            let status_code: u16 = status_code.parse().map_err(|e| Err(e.to_string()))?;
+            let (status_code, value) = match s.split_once(':') {
+                Some((status_code, value)) => (status_code, value),
+                None => return Err("Unable to split status code and value".to_string()),
+            };
+            let status_code: u16 = match status_code.parse() {
+                Ok(code) => code,
+                Err(e) => return Err(format!("Unable to parse status code: {}", e)),
+            };
             match status_code {
                 400u16 => Ok(Self::Status400(value.to_string())),
                 404u16 => Ok(Self::Status404(value.to_string())),
@@ -2933,14 +2937,16 @@ pub mod types {
     impl std::str::FromStr for GetSilenceError {
         type Err = std::string::String;
         fn from_str(s: &str) -> Result<Self, Self::Err> {
-            let (status_code, value) = s
-                .split_once(':')
-                .ok_or_else(|| {
-                    Err("Unable to split status code and value".to_string())
-                })?;
-            let status_code: u16 = status_code.parse().map_err(|e| Err(e.to_string()))?;
+            let (status_code, value) = match s.split_once(':') {
+                Some((status_code, value)) => (status_code, value),
+                None => return Err("Unable to split status code and value".to_string()),
+            };
+            let status_code: u16 = match status_code.parse() {
+                Ok(code) => code,
+                Err(e) => return Err(format!("Unable to parse status code: {}", e)),
+            };
             match status_code {
-                404u16 => Ok(Self::Status404(value.to_string())),
+                404u16 => Ok(Self::Status404(())),
                 500u16 => Ok(Self::Status500(value.to_string())),
                 _ => {
                     match serde_json::from_str(value) {
@@ -2964,14 +2970,16 @@ pub mod types {
     impl std::str::FromStr for DeleteSilenceError {
         type Err = std::string::String;
         fn from_str(s: &str) -> Result<Self, Self::Err> {
-            let (status_code, value) = s
-                .split_once(':')
-                .ok_or_else(|| {
-                    Err("Unable to split status code and value".to_string())
-                })?;
-            let status_code: u16 = status_code.parse().map_err(|e| Err(e.to_string()))?;
+            let (status_code, value) = match s.split_once(':') {
+                Some((status_code, value)) => (status_code, value),
+                None => return Err("Unable to split status code and value".to_string()),
+            };
+            let status_code: u16 = match status_code.parse() {
+                Ok(code) => code,
+                Err(e) => return Err(format!("Unable to parse status code: {}", e)),
+            };
             match status_code {
-                404u16 => Ok(Self::Status404(value.to_string())),
+                404u16 => Ok(Self::Status404(())),
                 500u16 => Ok(Self::Status500(value.to_string())),
                 _ => {
                     match serde_json::from_str(value) {
@@ -2995,12 +3003,14 @@ pub mod types {
     impl std::str::FromStr for GetAlertsError {
         type Err = std::string::String;
         fn from_str(s: &str) -> Result<Self, Self::Err> {
-            let (status_code, value) = s
-                .split_once(':')
-                .ok_or_else(|| {
-                    Err("Unable to split status code and value".to_string())
-                })?;
-            let status_code: u16 = status_code.parse().map_err(|e| Err(e.to_string()))?;
+            let (status_code, value) = match s.split_once(':') {
+                Some((status_code, value)) => (status_code, value),
+                None => return Err("Unable to split status code and value".to_string()),
+            };
+            let status_code: u16 = match status_code.parse() {
+                Ok(code) => code,
+                Err(e) => return Err(format!("Unable to parse status code: {}", e)),
+            };
             match status_code {
                 400u16 => Ok(Self::Status400(value.to_string())),
                 500u16 => Ok(Self::Status500(value.to_string())),
@@ -3026,12 +3036,14 @@ pub mod types {
     impl std::str::FromStr for PostAlertsError {
         type Err = std::string::String;
         fn from_str(s: &str) -> Result<Self, Self::Err> {
-            let (status_code, value) = s
-                .split_once(':')
-                .ok_or_else(|| {
-                    Err("Unable to split status code and value".to_string())
-                })?;
-            let status_code: u16 = status_code.parse().map_err(|e| Err(e.to_string()))?;
+            let (status_code, value) = match s.split_once(':') {
+                Some((status_code, value)) => (status_code, value),
+                None => return Err("Unable to split status code and value".to_string()),
+            };
+            let status_code: u16 = match status_code.parse() {
+                Ok(code) => code,
+                Err(e) => return Err(format!("Unable to parse status code: {}", e)),
+            };
             match status_code {
                 400u16 => Ok(Self::Status400(value.to_string())),
                 500u16 => Ok(Self::Status500(value.to_string())),
@@ -3057,12 +3069,14 @@ pub mod types {
     impl std::str::FromStr for GetAlertGroupsError {
         type Err = std::string::String;
         fn from_str(s: &str) -> Result<Self, Self::Err> {
-            let (status_code, value) = s
-                .split_once(':')
-                .ok_or_else(|| {
-                    Err("Unable to split status code and value".to_string())
-                })?;
-            let status_code: u16 = status_code.parse().map_err(|e| Err(e.to_string()))?;
+            let (status_code, value) = match s.split_once(':') {
+                Some((status_code, value)) => (status_code, value),
+                None => return Err("Unable to split status code and value".to_string()),
+            };
+            let status_code: u16 = match status_code.parse() {
+                Ok(code) => code,
+                Err(e) => return Err(format!("Unable to parse status code: {}", e)),
+            };
             match status_code {
                 400u16 => Ok(Self::Status400(value.to_string())),
                 500u16 => Ok(Self::Status500(value.to_string())),

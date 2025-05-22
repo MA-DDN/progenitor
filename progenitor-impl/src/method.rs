@@ -168,29 +168,6 @@ impl FromStr for BodyContentType {
     }
 }
 
-/*
-impl FromStr for BodyContentType {
-    type Err = Error;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "application/json" => Ok(BodyContentType::Json),
-            "application/x-www-form-urlencoded" => Ok(BodyContentType::FormUrlencoded),
-            "application/octet-stream" => Ok(BodyContentType::OctetStream),
-            s if s.starts_with("text/") => {
-                // Handle any text/* content type
-                Ok(BodyContentType::Text(s.to_string()))
-            }
-            // Be more lenient with other content types - treat them as octet-stream
-            _ => {
-                eprintln!("Warning: Treating unknown content type '{}' as application/octet-stream", s);
-                Ok(BodyContentType::OctetStream)
-            }
-        }
-    }
-}
-*/*/
-
 impl std::fmt::Display for BodyContentType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(match self {
@@ -2437,9 +2414,18 @@ impl Generator {
 
                 if let Some(code) = status_code {
                     let variant_name = format_ident!("Status{}", code);
-                    Some(quote! {
-                        #code => Ok(Self::#variant_name(value.to_string())),
-                    })
+
+                    let type_tokens = match &response.typ {
+                        OperationResponseKind::Type(_) => Some(quote! {
+                            #code => Ok(Self::#variant_name(value.to_string())),
+                        }),
+                        OperationResponseKind::None => Some(quote! {
+                            #code => Ok(Self::#variant_name(())),
+                        }),
+                        _ => None,
+                    };
+
+                    type_tokens
                 } else {
                     None
                 }
@@ -2457,11 +2443,15 @@ impl Generator {
                 type Err = std::string::String;
 
                 fn from_str(s: &str) -> Result<Self, Self::Err> {
-                    let (status_code, value) = s.split_once(':').ok_or_else(|| {
-                        Err("Unable to split status code and value".to_string())
-                    })?;
+                    let (status_code, value) = match s.split_once(':') {
+                        Some((status_code, value)) => (status_code, value),
+                        None => return Err("Unable to split status code and value".to_string()),
+                    };
 
-                    let status_code: u16 = status_code.parse().map_err(|e| Err(e.to_string()))?;
+                    let status_code: u16 = match status_code.parse() {
+                        Ok(code) => code,
+                        Err(e) => return Err(format!("Unable to parse status code: {}", e)),
+                    };
 
                     match status_code {
                         #(#from_str_match_arms)*
@@ -2569,9 +2559,18 @@ impl Generator {
 
                 if let Some(code) = status_code {
                     let variant_name = format_ident!("Status{}", code);
-                    Some(quote! {
-                        #code => Ok(Self::#variant_name(value.to_string())),
-                    })
+
+                    let type_tokens = match &response.typ {
+                        OperationResponseKind::Type(_) => Some(quote! {
+                            #code => Ok(Self::#variant_name(value.to_string())),
+                        }),
+                        OperationResponseKind::None => Some(quote! {
+                            #code => Ok(Self::#variant_name(())),
+                        }),
+                        _ => None,
+                    };
+
+                    type_tokens
                 } else {
                     None
                 }
@@ -2589,11 +2588,15 @@ impl Generator {
                 type Err = std::string::String;
 
                 fn from_str(s: &str) -> Result<Self, Self::Err> {
-                    let (status_code, value) = s.split_once(':').ok_or_else(|| {
-                        Err("Unable to split status code and value".to_string())
-                    })?;
+                    let (status_code, value) = match s.split_once(':') {
+                        Some((status_code, value)) => (status_code, value),
+                        None => return Err("Unable to split status code and value".to_string()),
+                    };
 
-                    let status_code: u16 = status_code.parse().map_err(|e| Err(e.to_string()))?;
+                    let status_code: u16 = match status_code.parse() {
+                        Ok(code) => code,
+                        Err(e) => return Err(format!("Unable to parse status code: {}", e)),
+                    };
 
                     match status_code {
                         #(#from_str_match_arms)*
