@@ -13,7 +13,7 @@ use serde::Deserialize;
 use thiserror::Error;
 use typify::{TypeSpace, TypeSpaceSettings};
 
-use crate::{method::OperationResponseStatus, to_schema::ToSchema};
+use crate::to_schema::ToSchema;
 
 pub use typify::CrateVers;
 pub use typify::TypeSpaceImpl as TypeImpl;
