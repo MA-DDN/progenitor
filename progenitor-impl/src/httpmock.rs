@@ -181,7 +181,7 @@ impl Generator {
                             quote! {
                                 let re = regex::Regex::new(
                                     &format!(#re_fmt, value.to_string())
-                                ).unwrap();
+                                ).expect("Invalid path parameter regex pattern");
                                 Self(self.0.path_matches(re))
                             },
                         )
@@ -313,7 +313,7 @@ impl Generator {
                 pub fn new(inner: ::httpmock::When) -> Self {
                     Self(inner
                         .method(#http_method)
-                        .path_matches(regex::Regex::new(#path_re).unwrap()))
+                        .path_matches(regex::Regex::new(#path_re).expect("Invalid path regex pattern")))
                 }
 
                 pub fn into_inner(self) -> ::httpmock::When {

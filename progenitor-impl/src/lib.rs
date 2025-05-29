@@ -484,7 +484,7 @@ impl Generator {
                     #[cfg(target_arch = "wasm32")]
                     let client = reqwest::ClientBuilder::new();
 
-                    Self::new_with_client(baseurl, client.build().unwrap(), #inner_value)
+                    Self::new_with_client(baseurl, client.build().expect("Failed to build HTTP client"), #inner_value)
                 }
 
                 /// Construct a new client with an existing `reqwest::Client`,
@@ -682,10 +682,10 @@ impl Generator {
 /// Add newlines after end-braces at <= two levels of indentation.
 pub fn space_out_items(content: String) -> Result<String> {
     Ok(if cfg!(not(windows)) {
-        let regex = regex::Regex::new(r#"(\n\s*})(\n\s{0,8}[^} ])"#).unwrap();
+        let regex = regex::Regex::new(r#"(\n\s*})(\n\s{0,8}[^} ])"#).expect("Invalid regex pattern for spacing");
         regex.replace_all(&content, "$1\n$2").to_string()
     } else {
-        let regex = regex::Regex::new(r#"(\n\s*})(\r\n\s{0,8}[^} ])"#).unwrap();
+        let regex = regex::Regex::new(r#"(\n\s*})(\r\n\s{0,8}[^} ])"#).expect("Invalid regex pattern for spacing");
         regex.replace_all(&content, "$1\r\n$2").to_string()
     })
 }
