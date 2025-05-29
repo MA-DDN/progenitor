@@ -1820,10 +1820,11 @@ impl Generator {
         )?;
 
         let send_doc = format!(
-            "Sends a `{}` request to `{}`",
+            "Sends a '{}' request to '{}'",
             method.method.as_str().to_ascii_uppercase(),
             method.path.to_string(),
         );
+
         let send_impl = quote! {
             #[doc = #send_doc]
             pub async fn send(self) -> Result<
@@ -1881,7 +1882,7 @@ impl Generator {
             let item_type = item.ident();
 
             let stream_doc = format!(
-                "Streams `{}` requests to `{}`",
+                "Streams '{}' requests to '{}'",
                 method.method.as_str().to_ascii_uppercase(),
                 method.path.to_string(),
             );
@@ -2629,7 +2630,7 @@ fn make_doc_comment(method: &OperationMethod) -> String {
     }
 
     buf.push_str(&format!(
-        "Sends a `{}` request to `{}`\n\n",
+        "Sends a '{}' request to '{}'\n\n",
         method.method.as_str().to_ascii_uppercase(),
         method.path.to_string(),
     ));

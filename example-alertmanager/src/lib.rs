@@ -3149,7 +3149,7 @@ impl ClientHooks<()> for &Client {}
 impl Client {
     /**Get current status of an Alertmanager instance and its cluster
 
-Sends a `GET` request to `/status`
+Sends a 'GET' request to '/status'
 
 */
     pub async fn get_status<'a>(
@@ -3188,7 +3188,7 @@ Sends a `GET` request to `/status`
     }
     /**Get list of all receivers (name of notification integrations)
 
-Sends a `GET` request to `/receivers`
+Sends a 'GET' request to '/receivers'
 
 */
     pub async fn get_receivers<'a>(
@@ -3230,7 +3230,7 @@ Sends a `GET` request to `/receivers`
     }
     /**Get a list of silences
 
-Sends a `GET` request to `/silences`
+Sends a 'GET' request to '/silences'
 
 Arguments:
 - `filter`: A list of matchers to filter silences by
@@ -3297,7 +3297,7 @@ Arguments:
     }
     /**Post a new silence or update an existing one
 
-Sends a `POST` request to `/silences`
+Sends a 'POST' request to '/silences'
 
 */
     pub async fn post_silences<'a>(
@@ -3359,7 +3359,7 @@ Sends a `POST` request to `/silences`
     }
     /**Get a silence by its ID
 
-Sends a `GET` request to `/silence/{silenceID}`
+Sends a 'GET' request to '/silence/{silenceID}'
 
 Arguments:
 - `silence_id`: ID of the silence to get
@@ -3427,7 +3427,7 @@ Arguments:
     }
     /**Delete a silence by its ID
 
-Sends a `DELETE` request to `/silence/{silenceID}`
+Sends a 'DELETE' request to '/silence/{silenceID}'
 
 Arguments:
 - `silence_id`: ID of the silence to get
@@ -3488,7 +3488,7 @@ Arguments:
     }
     /**Get a list of alerts
 
-Sends a `GET` request to `/alerts`
+Sends a 'GET' request to '/alerts'
 
 Arguments:
 - `active`: Show active alerts
@@ -3570,7 +3570,7 @@ Arguments:
     }
     /**Create new Alerts
 
-Sends a `POST` request to `/alerts`
+Sends a 'POST' request to '/alerts'
 
 */
     pub async fn post_alerts<'a>(
@@ -3629,7 +3629,7 @@ Sends a `POST` request to `/alerts`
     }
     /**Get a list of alert groups
 
-Sends a `GET` request to `/alerts/groups`
+Sends a 'GET' request to '/alerts/groups'
 
 Arguments:
 - `active`: Show active alerts
