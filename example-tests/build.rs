@@ -110,11 +110,6 @@ components:
             let httpmock_tokens = generator.httpmock(&spec, "crate")
                 .expect("Failed to generate httpmock tokens");
 
-            // Debug: write the raw httpmock tokens to a file for inspection
-            std::fs::write("debug_httpmock_tokens.rs", httpmock_tokens.to_string())
-                .expect("Failed to write debug httpmock tokens");
-            println!("✓ Debug httpmock tokens written to debug_httpmock_tokens.rs");
-
             let httpmock_ast = syn::parse2(httpmock_tokens)
                 .expect("Failed to parse httpmock tokens");
 
@@ -143,11 +138,6 @@ components:
                 }
                 Err(e) => {
                     println!("❌ Failed to parse test tokens: {}", e);
-
-                    // Debug: write the raw tokens to a file for inspection
-                    std::fs::write("debug_test_tokens.rs", test_tokens.to_string())
-                        .expect("Failed to write debug tokens");
-                    println!("✓ Debug tokens written to debug_test_tokens.rs");
 
                     // Try to find the problematic part by parsing smaller chunks
                     let tokens_str = test_tokens.to_string();
@@ -183,82 +173,6 @@ components:
                 .expect("Failed to write lib.rs file");
 
             println!("✓ Successfully created src/lib.rs with client and tests");
-
-            // Verify the generated content
-            let mut checks_passed = 0;
-            let mut total_checks = 0;
-
-            macro_rules! check {
-                ($condition:expr, $description:expr) => {
-                    total_checks += 1;
-                    if $condition {
-                        println!("✓ {}", $description);
-                        checks_passed += 1;
-                    } else {
-                        println!("✗ {}", $description);
-                    }
-                };
-            }
-
-            println!("\n🔍 Verification Checks:");
-            check!(
-                Path::new("src/lib.rs").exists(),
-                "lib.rs file was created"
-            );
-            check!(
-                combined_content.contains("pub struct Client"),
-                "Contains Client struct"
-            );
-            check!(
-                combined_content.contains("pub mod httpmock"),
-                "Contains httpmock module"
-            );
-            check!(
-                combined_content.contains("mod generated_tests"),
-                "Contains test module"
-            );
-            check!(
-                combined_content.contains("test_list_users_success"),
-                "Contains list_users success test"
-            );
-            check!(
-                combined_content.contains("test_create_user_success"),
-                "Contains create_user success test"
-            );
-            check!(
-                combined_content.contains("test_list_users_error"),
-                "Contains list_users error test"
-            );
-            check!(
-                combined_content.contains("test_create_user_error"),
-                "Contains create_user error test"
-            );
-            check!(
-                combined_content.contains("MockServer::start()"),
-                "Uses MockServer"
-            );
-            check!(
-                combined_content.contains("#[tokio::test]"),
-                "Uses tokio::test attribute"
-            );
-
-            println!(
-                "\n📊 Summary: {}/{} checks passed",
-                checks_passed, total_checks
-            );
-
-            if checks_passed == total_checks {
-                println!("🎉 All verification checks passed!");
-                println!("\n💡 The client and test generation is working correctly!");
-                println!("   Run 'cargo test' to execute the generated tests.");
-            } else {
-                println!("⚠️  Some checks failed. The implementation may need refinement.");
-            }
-
-            // Also write a preview file for inspection
-            fs::write("generated_preview.rs", combined_content.clone())
-                .expect("Failed to write preview file");
-            println!("\n📄 Full generated code also written to: generated_preview.rs");
         }
         Err(e) => {
             println!("❌ Failed to parse OpenAPI spec: {}", e);
