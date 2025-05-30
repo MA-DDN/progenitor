@@ -20,6 +20,7 @@ pub use progenitor_impl::GenerationSettings;
 pub use progenitor_impl::Generator;
 pub use progenitor_impl::InterfaceStyle;
 pub use progenitor_impl::TagStyle;
+pub use progenitor_impl::TestGenerationConfig;
 pub use progenitor_impl::TypeImpl;
 pub use progenitor_impl::TypePatch;
 #[cfg(feature = "macro")]

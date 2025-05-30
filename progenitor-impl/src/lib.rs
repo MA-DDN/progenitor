@@ -20,10 +20,13 @@ pub use typify::TypeSpaceImpl as TypeImpl;
 pub use typify::TypeSpacePatch as TypePatch;
 pub use typify::UnknownPolicy;
 
+pub use test_gen::TestGenerationConfig;
+
 mod cli;
 mod httpmock;
 mod method;
 mod template;
+mod test_gen;
 mod to_schema;
 mod util;
 
@@ -676,6 +679,20 @@ impl Generator {
     /// websockets.
     pub fn uses_websockets(&self) -> bool {
         self.uses_websockets
+    }
+
+    /// Generate comprehensive unit tests using httpmock.
+    ///
+    /// The `crate_path` parameter should be a valid Rust path corresponding to
+    /// the SDK. This can include `::` and instances of `-` in the crate name
+    /// should be converted to `_`.
+    pub fn generate_tests(
+        &mut self,
+        spec: &OpenAPI,
+        crate_path: &str,
+        config: &TestGenerationConfig,
+    ) -> Result<TokenStream> {
+        self.generate_tests_impl(spec, crate_path, config)
     }
 }
 
