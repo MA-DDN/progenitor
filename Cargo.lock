@@ -2987,7 +2987,7 @@ checksum = "dcf81ac59edc17cc8697ff311e8f5ef2d99fcbd9817b34cec66f90b6c3dfd987"
 [[package]]
 name = "typify"
 version = "0.4.2"
-source = "git+https://github.com/MA-DDN/typify?branch=fix-clippy-regex-issues#c9f0cd9aa6082b9929f858f7c4903acbdba4d0c9"
+source = "git+https://github.com/MA-DDN/typify?branch=fix-clippy-regex-issues#2915960c197422858c99891ffb80284425ce037e"
 dependencies = [
  "typify-impl",
  "typify-macro",
@@ -2996,7 +2996,7 @@ dependencies = [
 [[package]]
 name = "typify-impl"
 version = "0.4.2"
-source = "git+https://github.com/MA-DDN/typify?branch=fix-clippy-regex-issues#c9f0cd9aa6082b9929f858f7c4903acbdba4d0c9"
+source = "git+https://github.com/MA-DDN/typify?branch=fix-clippy-regex-issues#2915960c197422858c99891ffb80284425ce037e"
 dependencies = [
  "heck",
  "log",
@@ -3015,7 +3015,7 @@ dependencies = [
 [[package]]
 name = "typify-macro"
 version = "0.4.2"
-source = "git+https://github.com/MA-DDN/typify?branch=fix-clippy-regex-issues#c9f0cd9aa6082b9929f858f7c4903acbdba4d0c9"
+source = "git+https://github.com/MA-DDN/typify?branch=fix-clippy-regex-issues#2915960c197422858c99891ffb80284425ce037e"
 dependencies = [
  "proc-macro2",
  "quote",
