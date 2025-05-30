@@ -1,7 +1,7 @@
 #[allow(unused_imports)]
 pub use progenitor_client::{ByteStream, ClientInfo, Error, ResponseValue};
 #[allow(unused_imports)]
-use progenitor_client::{ClientHooks, OperationInfo, RequestBuilderExt, encode_path};
+use progenitor_client::{encode_path, ClientHooks, OperationInfo, RequestBuilderExt};
 /// Types used as operation parameters and responses.
 #[allow(clippy::all)]
 pub mod types {
@@ -11,12 +11,18 @@ pub mod types {
         pub struct ConversionError(::std::borrow::Cow<'static, str>);
         impl ::std::error::Error for ConversionError {}
         impl ::std::fmt::Display for ConversionError {
-            fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> Result<(), ::std::fmt::Error> {
+            fn fmt(
+                &self,
+                f: &mut ::std::fmt::Formatter<'_>,
+            ) -> Result<(), ::std::fmt::Error> {
                 ::std::fmt::Display::fmt(&self.0, f)
             }
         }
         impl ::std::fmt::Debug for ConversionError {
-            fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> Result<(), ::std::fmt::Error> {
+            fn fmt(
+                &self,
+                f: &mut ::std::fmt::Formatter<'_>,
+            ) -> Result<(), ::std::fmt::Error> {
                 ::std::fmt::Debug::fmt(&self.0, f)
             }
         }
@@ -64,7 +70,10 @@ pub mod types {
             skip_serializing_if = "::std::option::Option::is_none"
         )]
         pub generator_url: ::std::option::Option<::std::string::String>,
-        pub labels: ::std::collections::HashMap<::std::string::String, ::std::string::String>,
+        pub labels: ::std::collections::HashMap<
+            ::std::string::String,
+            ::std::string::String,
+        >,
     }
     impl ::std::convert::From<&Alert> for Alert {
         fn from(value: &Alert) -> Self {
@@ -159,7 +168,10 @@ pub mod types {
     #[derive(::serde::Deserialize, ::serde::Serialize, Clone, Debug)]
     pub struct AlertGroup {
         pub alerts: ::std::vec::Vec<AlertGroupAlertsItem>,
-        pub labels: ::std::collections::HashMap<::std::string::String, ::std::string::String>,
+        pub labels: ::std::collections::HashMap<
+            ::std::string::String,
+            ::std::string::String,
+        >,
         pub receiver: AlertGroupReceiver,
     }
     impl ::std::convert::From<&AlertGroup> for AlertGroup {
@@ -234,7 +246,10 @@ pub mod types {
             skip_serializing_if = "::std::option::Option::is_none"
         )]
         pub generator_url: ::std::option::Option<::std::string::String>,
-        pub labels: ::std::collections::HashMap<::std::string::String, ::std::string::String>,
+        pub labels: ::std::collections::HashMap<
+            ::std::string::String,
+            ::std::string::String,
+        >,
         pub receivers: ::std::vec::Vec<Receiver>,
         #[serde(rename = "startsAt")]
         pub starts_at: ::chrono::DateTime<::chrono::offset::Utc>,
@@ -445,7 +460,7 @@ pub mod types {
         Hash,
         Ord,
         PartialEq,
-        PartialOrd,
+        PartialOrd
     )]
     pub enum AlertStatusState {
         #[serde(rename = "unprocessed")]
@@ -471,7 +486,9 @@ pub mod types {
     }
     impl ::std::str::FromStr for AlertStatusState {
         type Err = self::error::ConversionError;
-        fn from_str(value: &str) -> ::std::result::Result<Self, self::error::ConversionError> {
+        fn from_str(
+            value: &str,
+        ) -> ::std::result::Result<Self, self::error::ConversionError> {
             match value {
                 "unprocessed" => Ok(Self::Unprocessed),
                 "active" => Ok(Self::Active),
@@ -482,7 +499,9 @@ pub mod types {
     }
     impl ::std::convert::TryFrom<&str> for AlertStatusState {
         type Error = self::error::ConversionError;
-        fn try_from(value: &str) -> ::std::result::Result<Self, self::error::ConversionError> {
+        fn try_from(
+            value: &str,
+        ) -> ::std::result::Result<Self, self::error::ConversionError> {
             value.parse()
         }
     }
@@ -701,7 +720,7 @@ pub mod types {
         Hash,
         Ord,
         PartialEq,
-        PartialOrd,
+        PartialOrd
     )]
     pub enum AlertmanagerStatusClusterStatus {
         #[serde(rename = "ready")]
@@ -727,7 +746,9 @@ pub mod types {
     }
     impl ::std::str::FromStr for AlertmanagerStatusClusterStatus {
         type Err = self::error::ConversionError;
-        fn from_str(value: &str) -> ::std::result::Result<Self, self::error::ConversionError> {
+        fn from_str(
+            value: &str,
+        ) -> ::std::result::Result<Self, self::error::ConversionError> {
             match value {
                 "ready" => Ok(Self::Ready),
                 "settling" => Ok(Self::Settling),
@@ -738,11 +759,14 @@ pub mod types {
     }
     impl ::std::convert::TryFrom<&str> for AlertmanagerStatusClusterStatus {
         type Error = self::error::ConversionError;
-        fn try_from(value: &str) -> ::std::result::Result<Self, self::error::ConversionError> {
+        fn try_from(
+            value: &str,
+        ) -> ::std::result::Result<Self, self::error::ConversionError> {
             value.parse()
         }
     }
-    impl ::std::convert::TryFrom<&::std::string::String> for AlertmanagerStatusClusterStatus {
+    impl ::std::convert::TryFrom<&::std::string::String>
+    for AlertmanagerStatusClusterStatus {
         type Error = self::error::ConversionError;
         fn try_from(
             value: &::std::string::String,
@@ -750,7 +774,8 @@ pub mod types {
             value.parse()
         }
     }
-    impl ::std::convert::TryFrom<::std::string::String> for AlertmanagerStatusClusterStatus {
+    impl ::std::convert::TryFrom<::std::string::String>
+    for AlertmanagerStatusClusterStatus {
         type Error = self::error::ConversionError;
         fn try_from(
             value: ::std::string::String,
@@ -835,7 +860,8 @@ pub mod types {
         pub revision: ::std::string::String,
         pub version: ::std::string::String,
     }
-    impl ::std::convert::From<&AlertmanagerStatusVersionInfo> for AlertmanagerStatusVersionInfo {
+    impl ::std::convert::From<&AlertmanagerStatusVersionInfo>
+    for AlertmanagerStatusVersionInfo {
         fn from(value: &AlertmanagerStatusVersionInfo) -> Self {
             value.clone()
         }
@@ -954,7 +980,7 @@ pub mod types {
         Hash,
         Ord,
         PartialEq,
-        PartialOrd,
+        PartialOrd
     )]
     pub enum ClusterStatusStatus {
         #[serde(rename = "ready")]
@@ -980,7 +1006,9 @@ pub mod types {
     }
     impl ::std::str::FromStr for ClusterStatusStatus {
         type Err = self::error::ConversionError;
-        fn from_str(value: &str) -> ::std::result::Result<Self, self::error::ConversionError> {
+        fn from_str(
+            value: &str,
+        ) -> ::std::result::Result<Self, self::error::ConversionError> {
             match value {
                 "ready" => Ok(Self::Ready),
                 "settling" => Ok(Self::Settling),
@@ -991,7 +1019,9 @@ pub mod types {
     }
     impl ::std::convert::TryFrom<&str> for ClusterStatusStatus {
         type Error = self::error::ConversionError;
-        fn try_from(value: &str) -> ::std::result::Result<Self, self::error::ConversionError> {
+        fn try_from(
+            value: &str,
+        ) -> ::std::result::Result<Self, self::error::ConversionError> {
             value.parse()
         }
     }
@@ -1243,7 +1273,10 @@ pub mod types {
     /// </details>
     #[derive(::serde::Deserialize, ::serde::Serialize, Clone, Debug)]
     pub struct GettableAlert {
-        pub annotations: ::std::collections::HashMap<::std::string::String, ::std::string::String>,
+        pub annotations: ::std::collections::HashMap<
+            ::std::string::String,
+            ::std::string::String,
+        >,
         #[serde(rename = "endsAt")]
         pub ends_at: ::chrono::DateTime<::chrono::offset::Utc>,
         pub fingerprint: ::std::string::String,
@@ -1288,7 +1321,8 @@ pub mod types {
     pub struct GettableAlertReceiversItem {
         pub name: ::std::string::String,
     }
-    impl ::std::convert::From<&GettableAlertReceiversItem> for GettableAlertReceiversItem {
+    impl ::std::convert::From<&GettableAlertReceiversItem>
+    for GettableAlertReceiversItem {
         fn from(value: &GettableAlertReceiversItem) -> Self {
             value.clone()
         }
@@ -1368,7 +1402,7 @@ pub mod types {
         Hash,
         Ord,
         PartialEq,
-        PartialOrd,
+        PartialOrd
     )]
     pub enum GettableAlertStatusState {
         #[serde(rename = "unprocessed")]
@@ -1394,7 +1428,9 @@ pub mod types {
     }
     impl ::std::str::FromStr for GettableAlertStatusState {
         type Err = self::error::ConversionError;
-        fn from_str(value: &str) -> ::std::result::Result<Self, self::error::ConversionError> {
+        fn from_str(
+            value: &str,
+        ) -> ::std::result::Result<Self, self::error::ConversionError> {
             match value {
                 "unprocessed" => Ok(Self::Unprocessed),
                 "active" => Ok(Self::Active),
@@ -1405,7 +1441,9 @@ pub mod types {
     }
     impl ::std::convert::TryFrom<&str> for GettableAlertStatusState {
         type Error = self::error::ConversionError;
-        fn try_from(value: &str) -> ::std::result::Result<Self, self::error::ConversionError> {
+        fn try_from(
+            value: &str,
+        ) -> ::std::result::Result<Self, self::error::ConversionError> {
             value.parse()
         }
     }
@@ -1574,7 +1612,10 @@ pub mod types {
             skip_serializing_if = "::std::option::Option::is_none"
         )]
         pub generator_url: ::std::option::Option<::std::string::String>,
-        pub labels: ::std::collections::HashMap<::std::string::String, ::std::string::String>,
+        pub labels: ::std::collections::HashMap<
+            ::std::string::String,
+            ::std::string::String,
+        >,
         pub receivers: ::std::vec::Vec<Receiver>,
         #[serde(rename = "startsAt")]
         pub starts_at: ::chrono::DateTime<::chrono::offset::Utc>,
@@ -1737,7 +1778,7 @@ pub mod types {
         Hash,
         Ord,
         PartialEq,
-        PartialOrd,
+        PartialOrd
     )]
     pub enum GettableSilenceStatusState {
         #[serde(rename = "expired")]
@@ -1763,7 +1804,9 @@ pub mod types {
     }
     impl ::std::str::FromStr for GettableSilenceStatusState {
         type Err = self::error::ConversionError;
-        fn from_str(value: &str) -> ::std::result::Result<Self, self::error::ConversionError> {
+        fn from_str(
+            value: &str,
+        ) -> ::std::result::Result<Self, self::error::ConversionError> {
             match value {
                 "expired" => Ok(Self::Expired),
                 "active" => Ok(Self::Active),
@@ -1774,7 +1817,9 @@ pub mod types {
     }
     impl ::std::convert::TryFrom<&str> for GettableSilenceStatusState {
         type Error = self::error::ConversionError;
-        fn try_from(value: &str) -> ::std::result::Result<Self, self::error::ConversionError> {
+        fn try_from(
+            value: &str,
+        ) -> ::std::result::Result<Self, self::error::ConversionError> {
             value.parse()
         }
     }
@@ -1840,7 +1885,8 @@ pub mod types {
             &self.0
         }
     }
-    impl ::std::convert::From<GettableSilences> for ::std::vec::Vec<GettableSilencesItem> {
+    impl ::std::convert::From<GettableSilences>
+    for ::std::vec::Vec<GettableSilencesItem> {
         fn from(value: GettableSilences) -> Self {
             value.0
         }
@@ -1850,7 +1896,8 @@ pub mod types {
             value.clone()
         }
     }
-    impl ::std::convert::From<::std::vec::Vec<GettableSilencesItem>> for GettableSilences {
+    impl ::std::convert::From<::std::vec::Vec<GettableSilencesItem>>
+    for GettableSilences {
         fn from(value: ::std::vec::Vec<GettableSilencesItem>) -> Self {
             Self(value)
         }
@@ -1928,7 +1975,10 @@ pub mod types {
         pub ::std::collections::HashMap<::std::string::String, ::std::string::String>,
     );
     impl ::std::ops::Deref for LabelSet {
-        type Target = ::std::collections::HashMap<::std::string::String, ::std::string::String>;
+        type Target = ::std::collections::HashMap<
+            ::std::string::String,
+            ::std::string::String,
+        >;
         fn deref(
             &self,
         ) -> &::std::collections::HashMap<::std::string::String, ::std::string::String> {
@@ -1936,8 +1986,7 @@ pub mod types {
         }
     }
     impl ::std::convert::From<LabelSet>
-        for ::std::collections::HashMap<::std::string::String, ::std::string::String>
-    {
+    for ::std::collections::HashMap<::std::string::String, ::std::string::String> {
         fn from(value: LabelSet) -> Self {
             value.0
         }
@@ -1947,13 +1996,14 @@ pub mod types {
             value.clone()
         }
     }
-    impl
-        ::std::convert::From<
-            ::std::collections::HashMap<::std::string::String, ::std::string::String>,
-        > for LabelSet
-    {
+    impl ::std::convert::From<
+        ::std::collections::HashMap<::std::string::String, ::std::string::String>,
+    > for LabelSet {
         fn from(
-            value: ::std::collections::HashMap<::std::string::String, ::std::string::String>,
+            value: ::std::collections::HashMap<
+                ::std::string::String,
+                ::std::string::String,
+            >,
         ) -> Self {
             Self(value)
         }
@@ -2332,7 +2382,10 @@ pub mod types {
             default,
             skip_serializing_if = ":: std :: collections :: HashMap::is_empty"
         )]
-        pub annotations: ::std::collections::HashMap<::std::string::String, ::std::string::String>,
+        pub annotations: ::std::collections::HashMap<
+            ::std::string::String,
+            ::std::string::String,
+        >,
         #[serde(
             rename = "endsAt",
             default,
@@ -2461,7 +2514,10 @@ pub mod types {
             skip_serializing_if = "::std::option::Option::is_none"
         )]
         pub generator_url: ::std::option::Option<::std::string::String>,
-        pub labels: ::std::collections::HashMap<::std::string::String, ::std::string::String>,
+        pub labels: ::std::collections::HashMap<
+            ::std::string::String,
+            ::std::string::String,
+        >,
         #[serde(
             rename = "startsAt",
             default,
@@ -2680,7 +2736,7 @@ pub mod types {
         Hash,
         Ord,
         PartialEq,
-        PartialOrd,
+        PartialOrd
     )]
     pub enum SilenceStatusState {
         #[serde(rename = "expired")]
@@ -2706,7 +2762,9 @@ pub mod types {
     }
     impl ::std::str::FromStr for SilenceStatusState {
         type Err = self::error::ConversionError;
-        fn from_str(value: &str) -> ::std::result::Result<Self, self::error::ConversionError> {
+        fn from_str(
+            value: &str,
+        ) -> ::std::result::Result<Self, self::error::ConversionError> {
             match value {
                 "expired" => Ok(Self::Expired),
                 "active" => Ok(Self::Active),
@@ -2717,7 +2775,9 @@ pub mod types {
     }
     impl ::std::convert::TryFrom<&str> for SilenceStatusState {
         type Error = self::error::ConversionError;
-        fn try_from(value: &str) -> ::std::result::Result<Self, self::error::ConversionError> {
+        fn try_from(
+            value: &str,
+        ) -> ::std::result::Result<Self, self::error::ConversionError> {
             value.parse()
         }
     }
@@ -2798,7 +2858,7 @@ pub mod types {
             V
         }
     }
-    ///Error enum for the 'get_silences' operation
+    ///Error enum for the `get_silences` operation
     #[derive(Debug, Clone, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
     pub enum GetSilencesError {
         #[doc = concat!("Error response for status code ", "400")]
@@ -2822,14 +2882,16 @@ pub mod types {
             match status_code {
                 400u16 => Ok(Self::Status400(value.to_string())),
                 500u16 => Ok(Self::Status500(value.to_string())),
-                _ => match serde_json::from_str(value) {
-                    Ok(json_value) => Ok(Self::UnknownValue(json_value)),
-                    Err(_) => Err("Unable to parse as JSON".to_string()),
-                },
+                _ => {
+                    match serde_json::from_str(value) {
+                        Ok(json_value) => Ok(Self::UnknownValue(json_value)),
+                        Err(_) => Err("Unable to parse as JSON".to_string()),
+                    }
+                }
             }
         }
     }
-    ///Error enum for the 'post_silences' operation
+    ///Error enum for the `post_silences` operation
     #[derive(Debug, Clone, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
     pub enum PostSilencesError {
         #[doc = concat!("Error response for status code ", "400")]
@@ -2853,14 +2915,16 @@ pub mod types {
             match status_code {
                 400u16 => Ok(Self::Status400(value.to_string())),
                 404u16 => Ok(Self::Status404(value.to_string())),
-                _ => match serde_json::from_str(value) {
-                    Ok(json_value) => Ok(Self::UnknownValue(json_value)),
-                    Err(_) => Err("Unable to parse as JSON".to_string()),
-                },
+                _ => {
+                    match serde_json::from_str(value) {
+                        Ok(json_value) => Ok(Self::UnknownValue(json_value)),
+                        Err(_) => Err("Unable to parse as JSON".to_string()),
+                    }
+                }
             }
         }
     }
-    ///Error enum for the 'get_silence' operation
+    ///Error enum for the `get_silence` operation
     #[derive(Debug, Clone, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
     pub enum GetSilenceError {
         #[doc = concat!("Error response for status code ", "404")]
@@ -2884,14 +2948,16 @@ pub mod types {
             match status_code {
                 404u16 => Ok(Self::Status404(())),
                 500u16 => Ok(Self::Status500(value.to_string())),
-                _ => match serde_json::from_str(value) {
-                    Ok(json_value) => Ok(Self::UnknownValue(json_value)),
-                    Err(_) => Err("Unable to parse as JSON".to_string()),
-                },
+                _ => {
+                    match serde_json::from_str(value) {
+                        Ok(json_value) => Ok(Self::UnknownValue(json_value)),
+                        Err(_) => Err("Unable to parse as JSON".to_string()),
+                    }
+                }
             }
         }
     }
-    ///Error enum for the 'delete_silence' operation
+    ///Error enum for the `delete_silence` operation
     #[derive(Debug, Clone, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
     pub enum DeleteSilenceError {
         #[doc = concat!("Error response for status code ", "404")]
@@ -2915,14 +2981,16 @@ pub mod types {
             match status_code {
                 404u16 => Ok(Self::Status404(())),
                 500u16 => Ok(Self::Status500(value.to_string())),
-                _ => match serde_json::from_str(value) {
-                    Ok(json_value) => Ok(Self::UnknownValue(json_value)),
-                    Err(_) => Err("Unable to parse as JSON".to_string()),
-                },
+                _ => {
+                    match serde_json::from_str(value) {
+                        Ok(json_value) => Ok(Self::UnknownValue(json_value)),
+                        Err(_) => Err("Unable to parse as JSON".to_string()),
+                    }
+                }
             }
         }
     }
-    ///Error enum for the 'get_alerts' operation
+    ///Error enum for the `get_alerts` operation
     #[derive(Debug, Clone, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
     pub enum GetAlertsError {
         #[doc = concat!("Error response for status code ", "400")]
@@ -2946,14 +3014,16 @@ pub mod types {
             match status_code {
                 400u16 => Ok(Self::Status400(value.to_string())),
                 500u16 => Ok(Self::Status500(value.to_string())),
-                _ => match serde_json::from_str(value) {
-                    Ok(json_value) => Ok(Self::UnknownValue(json_value)),
-                    Err(_) => Err("Unable to parse as JSON".to_string()),
-                },
+                _ => {
+                    match serde_json::from_str(value) {
+                        Ok(json_value) => Ok(Self::UnknownValue(json_value)),
+                        Err(_) => Err("Unable to parse as JSON".to_string()),
+                    }
+                }
             }
         }
     }
-    ///Error enum for the 'post_alerts' operation
+    ///Error enum for the `post_alerts` operation
     #[derive(Debug, Clone, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
     pub enum PostAlertsError {
         #[doc = concat!("Error response for status code ", "400")]
@@ -2977,14 +3047,16 @@ pub mod types {
             match status_code {
                 400u16 => Ok(Self::Status400(value.to_string())),
                 500u16 => Ok(Self::Status500(value.to_string())),
-                _ => match serde_json::from_str(value) {
-                    Ok(json_value) => Ok(Self::UnknownValue(json_value)),
-                    Err(_) => Err("Unable to parse as JSON".to_string()),
-                },
+                _ => {
+                    match serde_json::from_str(value) {
+                        Ok(json_value) => Ok(Self::UnknownValue(json_value)),
+                        Err(_) => Err("Unable to parse as JSON".to_string()),
+                    }
+                }
             }
         }
     }
-    ///Error enum for the 'get_alert_groups' operation
+    ///Error enum for the `get_alert_groups` operation
     #[derive(Debug, Clone, PartialEq, ::serde::Serialize, ::serde::Deserialize)]
     pub enum GetAlertGroupsError {
         #[doc = concat!("Error response for status code ", "400")]
@@ -3008,10 +3080,12 @@ pub mod types {
             match status_code {
                 400u16 => Ok(Self::Status400(value.to_string())),
                 500u16 => Ok(Self::Status500(value.to_string())),
-                _ => match serde_json::from_str(value) {
-                    Ok(json_value) => Ok(Self::UnknownValue(json_value)),
-                    Err(_) => Err("Unable to parse as JSON".to_string()),
-                },
+                _ => {
+                    match serde_json::from_str(value) {
+                        Ok(json_value) => Ok(Self::UnknownValue(json_value)),
+                        Err(_) => Err("Unable to parse as JSON".to_string()),
+                    }
+                }
             }
         }
     }
@@ -3029,16 +3103,14 @@ pub struct Client {
 impl Client {
     /// Create a new client.
     ///
-    /// 'baseurl' is the base URL provided to the internal
-    /// 'reqwest::Client', and should include a scheme and hostname,
+    /// `baseurl` is the base URL provided to the internal
+    /// `reqwest::Client`, and should include a scheme and hostname,
     /// as well as port and a path stem if applicable.
     pub fn new(baseurl: &str) -> Self {
         #[cfg(not(target_arch = "wasm32"))]
         let client = {
             let dur = std::time::Duration::from_secs(15);
-            reqwest::ClientBuilder::new()
-                .connect_timeout(dur)
-                .timeout(dur)
+            reqwest::ClientBuilder::new().connect_timeout(dur).timeout(dur)
         };
         #[cfg(target_arch = "wasm32")]
         let client = reqwest::ClientBuilder::new();
@@ -3047,11 +3119,11 @@ impl Client {
             client.build().expect("Failed to build HTTP client"),
         )
     }
-    /// Construct a new client with an existing 'reqwest::Client',
+    /// Construct a new client with an existing `reqwest::Client`,
     /// allowing more control over its configuration.
     ///
-    /// 'baseurl' is the base URL provided to the internal
-    /// 'reqwest::Client', and should include a scheme and hostname,
+    /// `baseurl` is the base URL provided to the internal
+    /// `reqwest::Client`, and should include a scheme and hostname,
     /// as well as port and a path stem if applicable.
     pub fn new_with_client(baseurl: &str, client: reqwest::Client) -> Self {
         Self {
@@ -3080,20 +3152,24 @@ impl ClientHooks<()> for &Client {}
 impl Client {
     /**Get current status of an Alertmanager instance and its cluster
 
-    Sends a GET request to /status
+Sends a 'GET' request to '/status'
 
-    */
+*/
+    #[allow(unused_variables)]
+    #[allow(irrefutable_let_patterns)]
     pub async fn get_status<'a>(
         &'a self,
         body: &'a ::serde_json::Map<::std::string::String, ::serde_json::Value>,
     ) -> Result<ResponseValue<types::GetStatusResponse>, Error<()>> {
         let url = format!("{}/status", self.baseurl,);
         let mut header_map = ::reqwest::header::HeaderMap::with_capacity(1usize);
-        header_map.append(
-            ::reqwest::header::HeaderName::from_static("api-version"),
-            ::reqwest::header::HeaderValue::from_static(Self::api_version()),
-        );
+        header_map
+            .append(
+                ::reqwest::header::HeaderName::from_static("api-version"),
+                ::reqwest::header::HeaderValue::from_static(Self::api_version()),
+            );
         #[allow(unused_mut)]
+        #[allow(unused_variables)]
         let mut request = self
             .client
             .get(url)
@@ -3118,20 +3194,27 @@ impl Client {
     }
     /**Get list of all receivers (name of notification integrations)
 
-    Sends a GET request to /receivers
+Sends a 'GET' request to '/receivers'
 
-    */
+*/
+    #[allow(unused_variables)]
+    #[allow(irrefutable_let_patterns)]
     pub async fn get_receivers<'a>(
         &'a self,
         body: &'a ::serde_json::Map<::std::string::String, ::serde_json::Value>,
-    ) -> Result<ResponseValue<::std::vec::Vec<types::GetReceiversResponseItem>>, Error<()>> {
+    ) -> Result<
+        ResponseValue<::std::vec::Vec<types::GetReceiversResponseItem>>,
+        Error<()>,
+    > {
         let url = format!("{}/receivers", self.baseurl,);
         let mut header_map = ::reqwest::header::HeaderMap::with_capacity(1usize);
-        header_map.append(
-            ::reqwest::header::HeaderName::from_static("api-version"),
-            ::reqwest::header::HeaderValue::from_static(Self::api_version()),
-        );
+        header_map
+            .append(
+                ::reqwest::header::HeaderName::from_static("api-version"),
+                ::reqwest::header::HeaderValue::from_static(Self::api_version()),
+            );
         #[allow(unused_mut)]
+        #[allow(unused_variables)]
         let mut request = self
             .client
             .get(url)
@@ -3156,12 +3239,14 @@ impl Client {
     }
     /**Get a list of silences
 
-    Sends a GET request to /silences
+Sends a 'GET' request to '/silences'
 
-    Arguments:
-    - 'filter': A list of matchers to filter silences by
-    - 'body'
-    */
+Arguments:
+- `filter`: A list of matchers to filter silences by
+- `body`
+*/
+    #[allow(unused_variables)]
+    #[allow(irrefutable_let_patterns)]
     pub async fn get_silences<'a>(
         &'a self,
         filter: Option<&'a ::std::vec::Vec<::std::string::String>>,
@@ -3172,11 +3257,13 @@ impl Client {
     > {
         let url = format!("{}/silences", self.baseurl,);
         let mut header_map = ::reqwest::header::HeaderMap::with_capacity(1usize);
-        header_map.append(
-            ::reqwest::header::HeaderName::from_static("api-version"),
-            ::reqwest::header::HeaderValue::from_static(Self::api_version()),
-        );
+        header_map
+            .append(
+                ::reqwest::header::HeaderName::from_static("api-version"),
+                ::reqwest::header::HeaderValue::from_static(Self::api_version()),
+            );
         #[allow(unused_mut)]
+        #[allow(unused_variables)]
         let mut request = self
             .client
             .get(url)
@@ -3197,37 +3284,52 @@ impl Client {
         let response = result?;
         match response.status().as_u16() {
             200u16 => ResponseValue::from_response(response).await,
-            400u16 => Err(Error::ErrorResponse(
-                ResponseValue::<types::GetSilencesError>::from_response::<types::GetSilencesError>(
-                    response,
+            400u16 => {
+                Err(
+                    Error::ErrorResponse(
+                        ResponseValue::<
+                            types::GetSilencesError,
+                        >::from_response::<types::GetSilencesError>(response)
+                            .await?,
+                    ),
                 )
-                .await?,
-            )),
-            500u16 => Err(Error::ErrorResponse(
-                ResponseValue::<types::GetSilencesError>::from_response::<types::GetSilencesError>(
-                    response,
+            }
+            500u16 => {
+                Err(
+                    Error::ErrorResponse(
+                        ResponseValue::<
+                            types::GetSilencesError,
+                        >::from_response::<types::GetSilencesError>(response)
+                            .await?,
+                    ),
                 )
-                .await?,
-            )),
+            }
             _ => Err(Error::UnexpectedResponse(response)),
         }
     }
     /**Post a new silence or update an existing one
 
-    Sends a POST request to /silences
+Sends a 'POST' request to '/silences'
 
-    */
+*/
+    #[allow(unused_variables)]
+    #[allow(irrefutable_let_patterns)]
     pub async fn post_silences<'a>(
         &'a self,
         body: &'a types::PostSilencesBody,
-    ) -> Result<ResponseValue<types::PostSilencesResponse>, Error<types::PostSilencesError>> {
+    ) -> Result<
+        ResponseValue<types::PostSilencesResponse>,
+        Error<types::PostSilencesError>,
+    > {
         let url = format!("{}/silences", self.baseurl,);
         let mut header_map = ::reqwest::header::HeaderMap::with_capacity(1usize);
-        header_map.append(
-            ::reqwest::header::HeaderName::from_static("api-version"),
-            ::reqwest::header::HeaderValue::from_static(Self::api_version()),
-        );
+        header_map
+            .append(
+                ::reqwest::header::HeaderName::from_static("api-version"),
+                ::reqwest::header::HeaderValue::from_static(Self::api_version()),
+            );
         #[allow(unused_mut)]
+        #[allow(unused_variables)]
         let mut request = self
             .client
             .post(url)
@@ -3248,48 +3350,57 @@ impl Client {
         match response.status().as_u16() {
             200u16 => ResponseValue::from_response(response).await,
             400u16 => {
-                Err(Error::ErrorResponse(
-                    ResponseValue::<types::PostSilencesError>::from_response::<
-                        types::PostSilencesError,
-                    >(response)
-                    .await?,
-                ))
+                Err(
+                    Error::ErrorResponse(
+                        ResponseValue::<
+                            types::PostSilencesError,
+                        >::from_response::<types::PostSilencesError>(response)
+                            .await?,
+                    ),
+                )
             }
             404u16 => {
-                Err(Error::ErrorResponse(
-                    ResponseValue::<types::PostSilencesError>::from_response::<
-                        types::PostSilencesError,
-                    >(response)
-                    .await?,
-                ))
+                Err(
+                    Error::ErrorResponse(
+                        ResponseValue::<
+                            types::PostSilencesError,
+                        >::from_response::<types::PostSilencesError>(response)
+                            .await?,
+                    ),
+                )
             }
             _ => Err(Error::UnexpectedResponse(response)),
         }
     }
     /**Get a silence by its ID
 
-    Sends a GET request to /silence/{silenceID}
+Sends a 'GET' request to '/silence/{silenceID}'
 
-    Arguments:
-    - 'silence_id': ID of the silence to get
-    - 'body'
-    */
+Arguments:
+- `silence_id`: ID of the silence to get
+- `body`
+*/
+    #[allow(unused_variables)]
+    #[allow(irrefutable_let_patterns)]
     pub async fn get_silence<'a>(
         &'a self,
         silence_id: &'a ::uuid::Uuid,
         body: &'a ::serde_json::Map<::std::string::String, ::serde_json::Value>,
-    ) -> Result<ResponseValue<types::GetSilenceResponse>, Error<types::GetSilenceError>> {
+    ) -> Result<
+        ResponseValue<types::GetSilenceResponse>,
+        Error<types::GetSilenceError>,
+    > {
         let url = format!(
-            "{}/silence/{}",
-            self.baseurl,
-            encode_path(&silence_id.to_string()),
+            "{}/silence/{}", self.baseurl, encode_path(& silence_id.to_string()),
         );
         let mut header_map = ::reqwest::header::HeaderMap::with_capacity(1usize);
-        header_map.append(
-            ::reqwest::header::HeaderName::from_static("api-version"),
-            ::reqwest::header::HeaderValue::from_static(Self::api_version()),
-        );
+        header_map
+            .append(
+                ::reqwest::header::HeaderName::from_static("api-version"),
+                ::reqwest::header::HeaderValue::from_static(Self::api_version()),
+            );
         #[allow(unused_mut)]
+        #[allow(unused_variables)]
         let mut request = self
             .client
             .get(url)
@@ -3309,45 +3420,55 @@ impl Client {
         let response = result?;
         match response.status().as_u16() {
             200u16 => ResponseValue::from_response(response).await,
-            404u16 => Err(Error::ErrorResponse(
-                ResponseValue::<types::GetSilenceError>::from_response::<types::GetSilenceError>(
-                    response,
+            404u16 => {
+                Err(
+                    Error::ErrorResponse(
+                        ResponseValue::<
+                            types::GetSilenceError,
+                        >::from_response::<types::GetSilenceError>(response)
+                            .await?,
+                    ),
                 )
-                .await?,
-            )),
-            500u16 => Err(Error::ErrorResponse(
-                ResponseValue::<types::GetSilenceError>::from_response::<types::GetSilenceError>(
-                    response,
+            }
+            500u16 => {
+                Err(
+                    Error::ErrorResponse(
+                        ResponseValue::<
+                            types::GetSilenceError,
+                        >::from_response::<types::GetSilenceError>(response)
+                            .await?,
+                    ),
                 )
-                .await?,
-            )),
+            }
             _ => Err(Error::UnexpectedResponse(response)),
         }
     }
     /**Delete a silence by its ID
 
-    Sends a DELETE request to /silence/{silenceID}
+Sends a 'DELETE' request to '/silence/{silenceID}'
 
-    Arguments:
-    - 'silence_id': ID of the silence to get
-    - 'body'
-    */
+Arguments:
+- `silence_id`: ID of the silence to get
+- `body`
+*/
+    #[allow(unused_variables)]
+    #[allow(irrefutable_let_patterns)]
     pub async fn delete_silence<'a>(
         &'a self,
         silence_id: &'a ::uuid::Uuid,
         body: &'a ::serde_json::Map<::std::string::String, ::serde_json::Value>,
     ) -> Result<ResponseValue<()>, Error<types::DeleteSilenceError>> {
         let url = format!(
-            "{}/silence/{}",
-            self.baseurl,
-            encode_path(&silence_id.to_string()),
+            "{}/silence/{}", self.baseurl, encode_path(& silence_id.to_string()),
         );
         let mut header_map = ::reqwest::header::HeaderMap::with_capacity(1usize);
-        header_map.append(
-            ::reqwest::header::HeaderName::from_static("api-version"),
-            ::reqwest::header::HeaderValue::from_static(Self::api_version()),
-        );
+        header_map
+            .append(
+                ::reqwest::header::HeaderName::from_static("api-version"),
+                ::reqwest::header::HeaderValue::from_static(Self::api_version()),
+            );
         #[allow(unused_mut)]
+        #[allow(unused_variables)]
         let mut request = self
             .client
             .delete(url)
@@ -3363,34 +3484,44 @@ impl Client {
         let response = result?;
         match response.status().as_u16() {
             200u16 => Ok(ResponseValue::empty(response)),
-            404u16 => Err(Error::ErrorResponse(
-                ResponseValue::<types::DeleteSilenceError>::from_response::<
-                    types::DeleteSilenceError,
-                >(response)
-                .await?,
-            )),
-            500u16 => Err(Error::ErrorResponse(
-                ResponseValue::<types::DeleteSilenceError>::from_response::<
-                    types::DeleteSilenceError,
-                >(response)
-                .await?,
-            )),
+            404u16 => {
+                Err(
+                    Error::ErrorResponse(
+                        ResponseValue::<
+                            types::DeleteSilenceError,
+                        >::from_response::<types::DeleteSilenceError>(response)
+                            .await?,
+                    ),
+                )
+            }
+            500u16 => {
+                Err(
+                    Error::ErrorResponse(
+                        ResponseValue::<
+                            types::DeleteSilenceError,
+                        >::from_response::<types::DeleteSilenceError>(response)
+                            .await?,
+                    ),
+                )
+            }
             _ => Err(Error::UnexpectedResponse(response)),
         }
     }
     /**Get a list of alerts
 
-    Sends a GET request to /alerts
+Sends a 'GET' request to '/alerts'
 
-    Arguments:
-    - 'active': Show active alerts
-    - 'filter': A list of matchers to filter alerts by
-    - 'inhibited': Show inhibited alerts
-    - 'receiver': A regex matching receivers to filter alerts by
-    - 'silenced': Show silenced alerts
-    - 'unprocessed': Show unprocessed alerts
-    - 'body'
-    */
+Arguments:
+- `active`: Show active alerts
+- `filter`: A list of matchers to filter alerts by
+- `inhibited`: Show inhibited alerts
+- `receiver`: A regex matching receivers to filter alerts by
+- `silenced`: Show silenced alerts
+- `unprocessed`: Show unprocessed alerts
+- `body`
+*/
+    #[allow(unused_variables)]
+    #[allow(irrefutable_let_patterns)]
     pub async fn get_alerts<'a>(
         &'a self,
         active: Option<bool>,
@@ -3400,15 +3531,19 @@ impl Client {
         silenced: Option<bool>,
         unprocessed: Option<bool>,
         body: &'a ::serde_json::Map<::std::string::String, ::serde_json::Value>,
-    ) -> Result<ResponseValue<::std::vec::Vec<types::GettableAlert>>, Error<types::GetAlertsError>>
-    {
+    ) -> Result<
+        ResponseValue<::std::vec::Vec<types::GettableAlert>>,
+        Error<types::GetAlertsError>,
+    > {
         let url = format!("{}/alerts", self.baseurl,);
         let mut header_map = ::reqwest::header::HeaderMap::with_capacity(1usize);
-        header_map.append(
-            ::reqwest::header::HeaderName::from_static("api-version"),
-            ::reqwest::header::HeaderValue::from_static(Self::api_version()),
-        );
+        header_map
+            .append(
+                ::reqwest::header::HeaderName::from_static("api-version"),
+                ::reqwest::header::HeaderValue::from_static(Self::api_version()),
+            );
         #[allow(unused_mut)]
+        #[allow(unused_variables)]
         let mut request = self
             .client
             .get(url)
@@ -3422,10 +3557,7 @@ impl Client {
             .query(&progenitor_client::QueryParam::new("inhibited", &inhibited))
             .query(&progenitor_client::QueryParam::new("receiver", &receiver))
             .query(&progenitor_client::QueryParam::new("silenced", &silenced))
-            .query(&progenitor_client::QueryParam::new(
-                "unprocessed",
-                &unprocessed,
-            ))
+            .query(&progenitor_client::QueryParam::new("unprocessed", &unprocessed))
             .headers(header_map)
             .build()?;
         let info = OperationInfo {
@@ -3437,37 +3569,49 @@ impl Client {
         let response = result?;
         match response.status().as_u16() {
             200u16 => ResponseValue::from_response(response).await,
-            400u16 => Err(Error::ErrorResponse(
-                ResponseValue::<types::GetAlertsError>::from_response::<types::GetAlertsError>(
-                    response,
+            400u16 => {
+                Err(
+                    Error::ErrorResponse(
+                        ResponseValue::<
+                            types::GetAlertsError,
+                        >::from_response::<types::GetAlertsError>(response)
+                            .await?,
+                    ),
                 )
-                .await?,
-            )),
-            500u16 => Err(Error::ErrorResponse(
-                ResponseValue::<types::GetAlertsError>::from_response::<types::GetAlertsError>(
-                    response,
+            }
+            500u16 => {
+                Err(
+                    Error::ErrorResponse(
+                        ResponseValue::<
+                            types::GetAlertsError,
+                        >::from_response::<types::GetAlertsError>(response)
+                            .await?,
+                    ),
                 )
-                .await?,
-            )),
+            }
             _ => Err(Error::UnexpectedResponse(response)),
         }
     }
     /**Create new Alerts
 
-    Sends a POST request to /alerts
+Sends a 'POST' request to '/alerts'
 
-    */
+*/
+    #[allow(unused_variables)]
+    #[allow(irrefutable_let_patterns)]
     pub async fn post_alerts<'a>(
         &'a self,
         body: &'a types::PostAlertsBody,
     ) -> Result<ResponseValue<()>, Error<types::PostAlertsError>> {
         let url = format!("{}/alerts", self.baseurl,);
         let mut header_map = ::reqwest::header::HeaderMap::with_capacity(1usize);
-        header_map.append(
-            ::reqwest::header::HeaderName::from_static("api-version"),
-            ::reqwest::header::HeaderValue::from_static(Self::api_version()),
-        );
+        header_map
+            .append(
+                ::reqwest::header::HeaderName::from_static("api-version"),
+                ::reqwest::header::HeaderValue::from_static(Self::api_version()),
+            );
         #[allow(unused_mut)]
+        #[allow(unused_variables)]
         let mut request = self
             .client
             .post(url)
@@ -3487,33 +3631,43 @@ impl Client {
         let response = result?;
         match response.status().as_u16() {
             200u16 => Ok(ResponseValue::empty(response)),
-            400u16 => Err(Error::ErrorResponse(
-                ResponseValue::<types::PostAlertsError>::from_response::<types::PostAlertsError>(
-                    response,
+            400u16 => {
+                Err(
+                    Error::ErrorResponse(
+                        ResponseValue::<
+                            types::PostAlertsError,
+                        >::from_response::<types::PostAlertsError>(response)
+                            .await?,
+                    ),
                 )
-                .await?,
-            )),
-            500u16 => Err(Error::ErrorResponse(
-                ResponseValue::<types::PostAlertsError>::from_response::<types::PostAlertsError>(
-                    response,
+            }
+            500u16 => {
+                Err(
+                    Error::ErrorResponse(
+                        ResponseValue::<
+                            types::PostAlertsError,
+                        >::from_response::<types::PostAlertsError>(response)
+                            .await?,
+                    ),
                 )
-                .await?,
-            )),
+            }
             _ => Err(Error::UnexpectedResponse(response)),
         }
     }
     /**Get a list of alert groups
 
-    Sends a GET request to /alerts/groups
+Sends a 'GET' request to '/alerts/groups'
 
-    Arguments:
-    - 'active': Show active alerts
-    - 'filter': A list of matchers to filter alerts by
-    - 'inhibited': Show inhibited alerts
-    - 'receiver': A regex matching receivers to filter alerts by
-    - 'silenced': Show silenced alerts
-    - 'body'
-    */
+Arguments:
+- `active`: Show active alerts
+- `filter`: A list of matchers to filter alerts by
+- `inhibited`: Show inhibited alerts
+- `receiver`: A regex matching receivers to filter alerts by
+- `silenced`: Show silenced alerts
+- `body`
+*/
+    #[allow(unused_variables)]
+    #[allow(irrefutable_let_patterns)]
     pub async fn get_alert_groups<'a>(
         &'a self,
         active: Option<bool>,
@@ -3522,15 +3676,19 @@ impl Client {
         receiver: Option<&'a str>,
         silenced: Option<bool>,
         body: &'a ::serde_json::Map<::std::string::String, ::serde_json::Value>,
-    ) -> Result<ResponseValue<::std::vec::Vec<types::AlertGroup>>, Error<types::GetAlertGroupsError>>
-    {
+    ) -> Result<
+        ResponseValue<::std::vec::Vec<types::AlertGroup>>,
+        Error<types::GetAlertGroupsError>,
+    > {
         let url = format!("{}/alerts/groups", self.baseurl,);
         let mut header_map = ::reqwest::header::HeaderMap::with_capacity(1usize);
-        header_map.append(
-            ::reqwest::header::HeaderName::from_static("api-version"),
-            ::reqwest::header::HeaderValue::from_static(Self::api_version()),
-        );
+        header_map
+            .append(
+                ::reqwest::header::HeaderName::from_static("api-version"),
+                ::reqwest::header::HeaderValue::from_static(Self::api_version()),
+            );
         #[allow(unused_mut)]
+        #[allow(unused_variables)]
         let mut request = self
             .client
             .get(url)
@@ -3555,18 +3713,26 @@ impl Client {
         let response = result?;
         match response.status().as_u16() {
             200u16 => ResponseValue::from_response(response).await,
-            400u16 => Err(Error::ErrorResponse(
-                ResponseValue::<types::GetAlertGroupsError>::from_response::<
-                    types::GetAlertGroupsError,
-                >(response)
-                .await?,
-            )),
-            500u16 => Err(Error::ErrorResponse(
-                ResponseValue::<types::GetAlertGroupsError>::from_response::<
-                    types::GetAlertGroupsError,
-                >(response)
-                .await?,
-            )),
+            400u16 => {
+                Err(
+                    Error::ErrorResponse(
+                        ResponseValue::<
+                            types::GetAlertGroupsError,
+                        >::from_response::<types::GetAlertGroupsError>(response)
+                            .await?,
+                    ),
+                )
+            }
+            500u16 => {
+                Err(
+                    Error::ErrorResponse(
+                        ResponseValue::<
+                            types::GetAlertGroupsError,
+                        >::from_response::<types::GetAlertGroupsError>(response)
+                            .await?,
+                    ),
+                )
+            }
             _ => Err(Error::UnexpectedResponse(response)),
         }
     }

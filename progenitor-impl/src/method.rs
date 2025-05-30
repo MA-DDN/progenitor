@@ -635,6 +635,8 @@ impl Generator {
 
         let method_impl = quote! {
             #[doc = #doc_comment]
+            #[allow(unused_variables)]
+            #[allow(irrefutable_let_patterns)]
             pub async fn #operation_id #bounds (
                 &'a self,
                 #(#params),*
@@ -711,6 +713,8 @@ impl Generator {
 
             quote! {
                 #[doc = #doc_comment]
+                #[allow(unused_variables)]
+                #[allow(irrefutable_let_patterns)]
                 pub fn #stream_id #bounds (
                     &'a self,
                     #(#stream_params),*
@@ -1177,6 +1181,7 @@ impl Generator {
             #headers_build
 
             #[allow(unused_mut)]
+            #[allow(unused_variables)]
             let mut #request_ident = #client_value.client
                 . #method_func (#url_ident)
                 #accept_header
@@ -1827,11 +1832,13 @@ impl Generator {
 
         let send_impl = quote! {
             #[doc = #send_doc]
+            #[allow(irrefutable_let_patterns)]
             pub async fn send(self) -> Result<
                 ResponseValue<#success>,
                 Error<#error>,
             > {
                 // Destructure the builder for convenience.
+                #[allow(unused_variables)]
                 let Self {
                     #client_ident,
                     #( #param_names, )*
@@ -1844,6 +1851,7 @@ impl Generator {
                 // TODO we could do something a bit nicer by collecting all
                 // errors rather than just reporting the first one.
                 #(
+                #[allow(unused_variables)]
                 let #param_names =
                     #param_names
                         #param_finalize
@@ -1889,6 +1897,8 @@ impl Generator {
 
             quote! {
                 #[doc = #stream_doc]
+                #[allow(unused_variables)]
+                #[allow(irrefutable_let_patterns)]
                 pub fn stream(self) -> impl futures::Stream<Item = Result<
                     #item_type,
                     Error<#error>,
