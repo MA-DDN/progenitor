@@ -285,9 +285,17 @@ impl Generator {
         let operation_id = format_ident!("{}", method.operation_id);
 
         // Generate the operation call based on the method signature
-        let result_handling = if method.params.iter().any(|p| matches!(p.kind, OperationParameterKind::Body(_))) {
+        let result_handling = if method
+            .params
+            .iter()
+            .any(|p| matches!(p.kind, OperationParameterKind::Body(_)))
+        {
             // Method has a body parameter
-            let body_param = method.params.iter().find(|p| matches!(p.kind, OperationParameterKind::Body(_))).unwrap();
+            let body_param = method
+                .params
+                .iter()
+                .find(|p| matches!(p.kind, OperationParameterKind::Body(_)))
+                .unwrap();
             let sample_value = self.generate_sample_value_internal(body_param)?;
             quote! {
                 let result = client.#operation_id(&#sample_value).await;
@@ -312,7 +320,11 @@ impl Generator {
         let operation_id = format_ident!("{}", method.operation_id);
 
         // Generate when conditions for body parameters
-        let when_conditions = if let Some(body_param) = method.params.iter().find(|p| matches!(p.kind, OperationParameterKind::Body(_))) {
+        let when_conditions = if let Some(body_param) = method
+            .params
+            .iter()
+            .find(|p| matches!(p.kind, OperationParameterKind::Body(_)))
+        {
             let sample_value = self.generate_sample_value_internal(body_param)?;
             quote! { when.body(&#sample_value); }
         } else {

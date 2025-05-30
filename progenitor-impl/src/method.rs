@@ -2344,12 +2344,10 @@ impl Generator {
         method: &OperationMethod,
     ) -> Result<Option<TokenStream>> {
         // Extract all *success* responses (2xx)
-        let (success_responses, _) = self.extract_responses(method, |status| {
-            match status {
-                OperationResponseStatus::Code(code) if (200..=299).contains(code) => true,
-                OperationResponseStatus::Range(2) => true,
-                _ => false,
-            }
+        let (success_responses, _) = self.extract_responses(method, |status| match status {
+            OperationResponseStatus::Code(code) if (200..=299).contains(code) => true,
+            OperationResponseStatus::Range(2) => true,
+            _ => false,
         });
 
         // Only generate an enum if there are multiple unique success response types
@@ -2484,12 +2482,10 @@ impl Generator {
         method: &OperationMethod,
     ) -> Result<Option<TokenStream>> {
         // Extract all error responses (4xx and 5xx)
-        let (error_responses, _) = self.extract_responses(method, |status| {
-            match status {
-                OperationResponseStatus::Code(code) if (400..=599).contains(code) => true,
-                OperationResponseStatus::Range(range) if (4..=5).contains(range) => true,
-                _ => false,
-            }
+        let (error_responses, _) = self.extract_responses(method, |status| match status {
+            OperationResponseStatus::Code(code) if (400..=599).contains(code) => true,
+            OperationResponseStatus::Range(range) if (4..=5).contains(range) => true,
+            _ => false,
         });
 
         if error_responses.is_empty() {
