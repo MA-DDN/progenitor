@@ -119,7 +119,7 @@ impl Generator {
             pub mod #test_module_name {
                 use super::*;
                 use #crate_path::httpmock::{MockServerExt, operations};
-                use httpmock::prelude::*;
+                use ::httpmock::prelude::*;
                 use tokio;
 
                 #(#test_functions)*
@@ -166,7 +166,7 @@ impl Generator {
                 #[doc = #doc_comment]
                 async fn #test_name() {
                     let server = MockServer::start();
-                    let client = Client::new(&server.base_url()).unwrap();
+                    let client = Client::new(&server.base_url());
 
                     #mock_setup
 
@@ -219,7 +219,7 @@ impl Generator {
                 #[doc = #doc_comment]
                 async fn #test_name() {
                     let server = MockServer::start();
-                    let client = Client::new(&server.base_url()).unwrap();
+                    let client = Client::new(&server.base_url());
 
                     #mock_setup
 
@@ -253,7 +253,7 @@ impl Generator {
                 #[doc = #doc_comment]
                 async fn #test_name() {
                     let server = MockServer::start();
-                    let client = Client::new(&server.base_url()).unwrap();
+                    let client = Client::new(&server.base_url());
 
                     // Test with parameter validation
                     // Implementation would verify parameter handling
@@ -280,37 +280,22 @@ impl Generator {
     fn generate_operation_call_internal(
         &self,
         method: &OperationMethod,
-        expect_error: bool,
+        _expect_error: bool,
     ) -> Result<TokenStream> {
         let operation_id = format_ident!("{}", method.operation_id);
 
-        // Generate sample parameters
-        let param_calls = method
-            .params
-            .iter()
-            .map(|param| {
-                let param_name = format_ident!("{}", param.name);
-                let sample_value = self.generate_sample_value_internal(param)?;
-
-                Ok(quote! { .#param_name(#sample_value) })
-            })
-            .collect::<Result<Vec<_>>>()?;
-
-        let result_handling = if expect_error {
+        // Generate the operation call based on the method signature
+        let result_handling = if method.params.iter().any(|p| matches!(p.kind, OperationParameterKind::Body(_))) {
+            // Method has a body parameter
+            let body_param = method.params.iter().find(|p| matches!(p.kind, OperationParameterKind::Body(_))).unwrap();
+            let sample_value = self.generate_sample_value_internal(body_param)?;
             quote! {
-                let result = client
-                    .#operation_id()
-                    #(#param_calls)*
-                    .send()
-                    .await;
+                let result = client.#operation_id(&#sample_value).await;
             }
         } else {
+            // Method has no body parameter
             quote! {
-                let result = client
-                    .#operation_id()
-                    #(#param_calls)*
-                    .send()
-                    .await;
+                let result = client.#operation_id().await;
             }
         };
 
@@ -326,24 +311,20 @@ impl Generator {
     ) -> Result<TokenStream> {
         let operation_id = format_ident!("{}", method.operation_id);
 
-        // Generate when conditions for parameters
-        let when_conditions = method
-            .params
-            .iter()
-            .map(|param| {
-                let param_name = format_ident!("{}", param.name);
-                let sample_value = self.generate_sample_value_internal(param)?;
-
-                Ok(quote! { .#param_name(#sample_value) })
-            })
-            .collect::<Result<Vec<_>>>()?;
+        // Generate when conditions for body parameters
+        let when_conditions = if let Some(body_param) = method.params.iter().find(|p| matches!(p.kind, OperationParameterKind::Body(_))) {
+            let sample_value = self.generate_sample_value_internal(body_param)?;
+            quote! { when.body(&#sample_value); }
+        } else {
+            quote! { when; }
+        };
 
         // Generate then response
         let then_response = self.generate_mock_response_internal(response, is_error)?;
 
         Ok(quote! {
             let _mock = server.#operation_id(|when, then| {
-                when #(#when_conditions)*;
+                #when_conditions
                 #then_response
             });
         })
@@ -366,25 +347,36 @@ impl Generator {
                     self.generate_sample_response_value_internal(&response.typ)?;
                 Ok(quote! { then.created(&#sample_response); })
             }
+            OperationResponseStatus::Code(400) => {
+                let sample_response =
+                    self.generate_sample_response_value_internal(&response.typ)?;
+                Ok(quote! { then.bad_request(&#sample_response); })
+            }
+            OperationResponseStatus::Code(500) => {
+                let sample_response =
+                    self.generate_sample_response_value_internal(&response.typ)?;
+                Ok(quote! { then.internal_server_error(&#sample_response); })
+            }
             OperationResponseStatus::Code(code) if *code >= 400 => {
                 let sample_response =
                     self.generate_sample_response_value_internal(&response.typ)?;
-                Ok(quote! { then.client_error(#code, &#sample_response); })
+                // Use a generic error method for other status codes
+                Ok(quote! { then.status(#code).json_body_obj(&#sample_response); })
             }
             OperationResponseStatus::Range(4) => {
                 let sample_response =
                     self.generate_sample_response_value_internal(&response.typ)?;
-                Ok(quote! { then.client_error(400, &#sample_response); })
+                Ok(quote! { then.bad_request(&#sample_response); })
             }
             OperationResponseStatus::Range(5) => {
                 let sample_response =
                     self.generate_sample_response_value_internal(&response.typ)?;
-                Ok(quote! { then.server_error(500, &#sample_response); })
+                Ok(quote! { then.internal_server_error(&#sample_response); })
             }
             _ => {
                 let sample_response =
                     self.generate_sample_response_value_internal(&response.typ)?;
-                Ok(quote! { then.default_response(200, &#sample_response); })
+                Ok(quote! { then.ok(&#sample_response); })
             }
         }
     }
@@ -394,17 +386,8 @@ impl Generator {
         match &param.typ {
             OperationParameterType::Type(type_id) => {
                 let type_entry = self.type_space.get_type(type_id).unwrap();
-                let details = type_entry.details();
-                match details {
-                    typify::TypeDetails::String => Ok(quote! { "test_value" }),
-                    typify::TypeDetails::Builtin(builtin) => match builtin {
-                        "i32" | "i64" | "u32" | "u64" | "isize" | "usize" => Ok(quote! { 42 }),
-                        "f32" | "f64" => Ok(quote! { 3.14 }),
-                        "bool" => Ok(quote! { true }),
-                        _ => Ok(quote! { Default::default() }),
-                    },
-                    _ => Ok(quote! { Default::default() }),
-                }
+                let type_ident = type_entry.ident();
+                Ok(quote! { #type_ident::default() })
             }
             OperationParameterType::RawBody => match &param.kind {
                 OperationParameterKind::Body(BodyContentType::Json) => {
@@ -425,8 +408,22 @@ impl Generator {
     ) -> Result<TokenStream> {
         match response_kind {
             OperationResponseKind::Type(type_id) => {
-                let type_name = self.type_space.get_type(type_id).unwrap().ident();
-                Ok(quote! { #type_name::default() })
+                let type_entry = self.type_space.get_type(type_id).unwrap();
+
+                // Use a more careful approach to generate the type reference
+                // to avoid issues with generic parameters and spacing
+                let details = type_entry.details();
+                match details {
+                    typify::TypeDetails::Vec(inner_type_id) => {
+                        let inner_type = self.type_space.get_type(&inner_type_id).unwrap();
+                        let inner_ident = inner_type.ident();
+                        Ok(quote! { Vec::<#inner_ident>::default() })
+                    }
+                    _ => {
+                        let type_ident = type_entry.ident();
+                        Ok(quote! { #type_ident::default() })
+                    }
+                }
             }
             OperationResponseKind::None => Ok(quote! { () }),
             OperationResponseKind::Raw => Ok(quote! { serde_json::json!({"message": "success"}) }),
@@ -613,7 +610,7 @@ components:
             "Should contain error test for create_user"
         );
         assert!(
-            test_code.contains("MockServer::start()"),
+            test_code.contains("MockServer :: start ()"),
             "Should use MockServer"
         );
         assert!(
@@ -621,7 +618,7 @@ components:
             "Should generate async test functions"
         );
         assert!(
-            test_code.contains("#[tokio::test]"),
+            test_code.contains("# [tokio :: test]"),
             "Should use tokio::test attribute"
         );
 
@@ -710,7 +707,7 @@ paths:
 
     #[test]
     fn test_sample_value_generation() {
-        let mut generator = Generator::default();
+        let generator = Generator::default();
 
         // Test string parameter
         let string_param = OperationParameter {

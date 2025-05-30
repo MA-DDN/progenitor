@@ -89,17 +89,19 @@ components:
         Ok(spec) => {
             println!("✓ Successfully parsed OpenAPI specification");
 
-            // Create generator
-            let mut generator = Generator::default();
+            // Create generator with proper settings
+            let mut settings = progenitor_impl::GenerationSettings::default();
+            settings.with_derive("PartialEq").with_derive("Default");
+            let mut generator = Generator::new(&settings);
 
             // 1. Generate the main client code
             println!("\n📦 Generating main client code...");
             let client_tokens = generator.generate_tokens(&spec)
                 .expect("Failed to generate client tokens");
-            
+
             let client_ast = syn::parse2(client_tokens)
                 .expect("Failed to parse client tokens");
-            
+
             let client_content = prettyplease::unparse(&client_ast);
             println!("✓ Successfully generated client code");
 
@@ -107,10 +109,15 @@ components:
             println!("\n🔧 Generating httpmock support...");
             let httpmock_tokens = generator.httpmock(&spec, "crate")
                 .expect("Failed to generate httpmock tokens");
-            
+
+            // Debug: write the raw httpmock tokens to a file for inspection
+            std::fs::write("debug_httpmock_tokens.rs", httpmock_tokens.to_string())
+                .expect("Failed to write debug httpmock tokens");
+            println!("✓ Debug httpmock tokens written to debug_httpmock_tokens.rs");
+
             let httpmock_ast = syn::parse2(httpmock_tokens)
                 .expect("Failed to parse httpmock tokens");
-            
+
             let httpmock_content = prettyplease::unparse(&httpmock_ast);
             println!("✓ Successfully generated httpmock support");
 
@@ -127,19 +134,37 @@ components:
 
             let test_tokens = generator.generate_tests(&spec, "crate", &test_config)
                 .expect("Failed to generate test tokens");
-            
-            let test_ast = syn::parse2(test_tokens)
-                .expect("Failed to parse test tokens");
-            
+
+            // Try to parse the tokens directly without string conversion
+            let test_ast = match syn::parse2::<syn::File>(test_tokens.clone()) {
+                Ok(ast) => {
+                    println!("✓ Successfully parsed test tokens");
+                    ast
+                }
+                Err(e) => {
+                    println!("❌ Failed to parse test tokens: {}", e);
+
+                    // Debug: write the raw tokens to a file for inspection
+                    std::fs::write("debug_test_tokens.rs", test_tokens.to_string())
+                        .expect("Failed to write debug tokens");
+                    println!("✓ Debug tokens written to debug_test_tokens.rs");
+
+                    // Try to find the problematic part by parsing smaller chunks
+                    let tokens_str = test_tokens.to_string();
+                    println!("Raw tokens (first 500 chars): {}", &tokens_str[..tokens_str.len().min(500)]);
+                    panic!("Failed to parse test tokens: {}", e);
+                }
+            };
+
             let test_content = prettyplease::unparse(&test_ast);
             println!("✓ Successfully generated unit tests");
 
             // 4. Combine client and tests into a single lib.rs file
             println!("\n📄 Combining client and tests into lib.rs...");
-            
+
             // Create src directory if it doesn't exist
             fs::create_dir_all("src").expect("Failed to create src directory");
-            
+
             // Combine the content
             let combined_content = format!(
                 "//! Auto-generated client and tests for the Simple API\n\n\
@@ -152,11 +177,11 @@ components:
                  {}\n",
                 client_content, httpmock_content, test_content
             );
-            
+
             // Write the combined file
             fs::write("src/lib.rs", &combined_content)
                 .expect("Failed to write lib.rs file");
-            
+
             println!("✓ Successfully created src/lib.rs with client and tests");
 
             // Verify the generated content
@@ -209,7 +234,7 @@ components:
                 "Contains create_user error test"
             );
             check!(
-                combined_content.contains("MockServer::start()"), 
+                combined_content.contains("MockServer::start()"),
                 "Uses MockServer"
             );
             check!(
@@ -241,7 +266,7 @@ components:
     }
 
     println!("\n🏁 Demo complete!");
-    
+
     // Tell Cargo to rerun this build script if the build.rs file changes
     println!("cargo:rerun-if-changed=build.rs");
 }

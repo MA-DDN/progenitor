@@ -263,7 +263,8 @@ impl Generator {
         let mut type_settings = TypeSpaceSettings::default();
         type_settings
             .with_type_mod("types")
-            .with_struct_builder(settings.interface == InterfaceStyle::Builder);
+            .with_struct_builder(settings.interface == InterfaceStyle::Builder)
+            .with_derive("PartialEq".to_string()); // Add PartialEq to all generated types
         settings.extra_derives.iter().for_each(|derive| {
             let _ = type_settings.with_derive(derive.clone());
         });

@@ -229,22 +229,22 @@ impl OperationResponseStatus {
     }
 
     pub fn is_success_or_default(&self) -> bool {
-        matches!(
-            self,
-            OperationResponseStatus::Default
-                | OperationResponseStatus::Code(101)
-                | OperationResponseStatus::Code(200..=299)
-                | OperationResponseStatus::Range(2)
-        )
+        match self {
+            OperationResponseStatus::Default => true,
+            OperationResponseStatus::Code(101) => true,
+            OperationResponseStatus::Code(code) if (200..=299).contains(code) => true,
+            OperationResponseStatus::Range(2) => true,
+            _ => false,
+        }
     }
 
     pub fn is_error_or_default(&self) -> bool {
-        matches!(
-            self,
-            OperationResponseStatus::Default
-                | OperationResponseStatus::Code(400..=599)
-                | OperationResponseStatus::Range(4..=5)
-        )
+        match self {
+            OperationResponseStatus::Default => true,
+            OperationResponseStatus::Code(code) if (400..=599).contains(code) => true,
+            OperationResponseStatus::Range(range) if (4..=5).contains(range) => true,
+            _ => false,
+        }
     }
 
     pub fn is_default(&self) -> bool {
@@ -966,7 +966,7 @@ impl Generator {
                     let pat = match &response.status_code {
                         OperationResponseStatus::Code(code) => quote! { #code },
                         OperationResponseStatus::Range(_) | OperationResponseStatus::Default => {
-                            quote! { 200 ..= 299 }
+                            quote! { 200..=299 }
                         }
                     };
                     let variant_name = match &response.status_code {
@@ -1046,7 +1046,7 @@ impl Generator {
                 OperationResponseStatus::Range(r) => {
                     let min = r * 100;
                     let max = min + 99;
-                    quote! { #min ..= #max }
+                    quote! { #min..=#max }
                 }
                 OperationResponseStatus::Default => quote! { _ },
             };
@@ -2345,10 +2345,11 @@ impl Generator {
     ) -> Result<Option<TokenStream>> {
         // Extract all *success* responses (2xx)
         let (success_responses, _) = self.extract_responses(method, |status| {
-            matches!(
-                status,
-                OperationResponseStatus::Code(200..=299) | OperationResponseStatus::Range(2)
-            )
+            match status {
+                OperationResponseStatus::Code(code) if (200..=299).contains(code) => true,
+                OperationResponseStatus::Range(2) => true,
+                _ => false,
+            }
         });
 
         // Only generate an enum if there are multiple unique success response types
@@ -2484,10 +2485,11 @@ impl Generator {
     ) -> Result<Option<TokenStream>> {
         // Extract all error responses (4xx and 5xx)
         let (error_responses, _) = self.extract_responses(method, |status| {
-            matches!(
-                status,
-                OperationResponseStatus::Code(400..=599) | OperationResponseStatus::Range(4..=5)
-            )
+            match status {
+                OperationResponseStatus::Code(code) if (400..=599).contains(code) => true,
+                OperationResponseStatus::Range(range) if (4..=5).contains(range) => true,
+                _ => false,
+            }
         });
 
         if error_responses.is_empty() {
@@ -2527,7 +2529,8 @@ impl Generator {
             let type_tokens = match &response.typ {
                 OperationResponseKind::Type(type_id) => {
                     let type_name = self.type_space.get_type(type_id).unwrap();
-                    let type_ident = type_name.ident();
+                    let type_name_str = type_name.name();
+                    let type_ident = format_ident!("{}", type_name_str);
                     quote! { #type_ident }
                 }
                 OperationResponseKind::None => {
@@ -2573,7 +2576,12 @@ impl Generator {
 
                     let type_tokens = match &response.typ {
                         OperationResponseKind::Type(_) => Some(quote! {
-                            #code => Ok(Self::#variant_name(value.to_string())),
+                            #code => {
+                                match serde_json::from_str(value) {
+                                    Ok(parsed_value) => Ok(Self::#variant_name(parsed_value)),
+                                    Err(_) => Err("Unable to parse error response as JSON".to_string())
+                                }
+                            },
                         }),
                         OperationResponseKind::None => Some(quote! {
                             #code => Ok(Self::#variant_name(())),
